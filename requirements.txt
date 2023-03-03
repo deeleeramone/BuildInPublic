@@ -1,0 +1,1 @@
+openbb[all]>=2.5.1; python_version > "3.9"

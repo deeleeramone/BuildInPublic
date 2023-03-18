@@ -1,21 +1,25 @@
-# A Python Interface for the NY Federal Reserve RESTful API and RSS Feeds
+# A Python Wrapper for the NY Federal Reserve
 
-All data available from the RESTful API (https://markets.newyorkfed.org/static/docs/markets-api.html) is wrapped as a Python client.
+## RESTful API
 
-## How to Use
+All data available from the RESTful API (https://markets.newyorkfed.org/static/docs/markets-api.html) is accessible via Python functions.
+
+### How to Use
 
 Import it:
 
-```console
+```python
 from ny_fed.rest_api import RestAPI
 fed = RestAPI()
 ```
 
 Consult the docstrings:
 
-```console
+```python
 fed?
+```
 
+```console
 Type:        RestAPI
 String form: <ny_fed.rest_api.RestAPI object at 0x102ab37f0>
 File:        ~/GitHub/BuildInPublic/ny_fed/rest_api.py
@@ -34,11 +38,13 @@ soma: Class for System Open Market Account Holdings.
 treasury: Class for Treasury Security Operations.
 ```
 
-Docstrings for details on each class outline the contents.
+Docstrings contain details for the contents of each sub-class.
+
+```python
+fed.soma?
+```
 
 ```console
-fed.soma?
-
 Type:        SOMAHoldings
 String form: <ny_fed.rest_api.SOMAHoldings object at 0x102c56ad0>
 File:        ~/GitHub/BuildInPublic/ny_fed/rest_api.py
@@ -68,9 +74,11 @@ Examples
 
 Most data is returned as JSON format.
 
-```
+```python
 fed.soma.get_agency_holdings(holding_type = "mbs")[0]
+```
 
+```console
 {'asOfDate': '2023-03-15',
  'cusip': '3132DWAW3',
  'securityDescription': 'UMBS MORTPASS 2% 01/51',
@@ -80,4 +88,18 @@ fed.soma.get_agency_holdings(holding_type = "mbs")[0]
  'securityType': 'MBS'}
 ```
 
-Some fields, such as `currentFaceValue` may need to be converted as a float.
+Some fields, such as `currentFaceValue`, may need to be converted as a float.
+
+```python
+import pandas as pd
+
+df = pd.DataFrame.from_records(
+    fed.soma.get_agency_holdings(holding_type = "mbs")
+)
+df["currentFaceValue"] = df.currentFaceValue.astype(float)
+df["currentFaceValue"].sum()
+```
+
+```console
+2600298927914.92
+```

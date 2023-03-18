@@ -1,2 +1,4 @@
 openbb[all]>=2.5.1; python_version > "3.9"
 itables>=1.4.6; python_version > "3.9"
+pandas>=1.5.3; python_version > "3.9"
+datetime>=5.1; python_version > "3.9"

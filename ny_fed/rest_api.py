@@ -1,4 +1,5 @@
 """Python Connector for NY Federal Reserve RESTful API"""
+
 from typing import Optional
 import pandas as pd
 from datetime import datetime
@@ -479,16 +480,16 @@ class AgencyMBSOperations:
 
     Attributes
     ----------
-    self.latest: Function for the latest AMBS operation announcements or results for the current day. 
+    ambs.latest: Function for the latest AMBS operation announcements or results for the current day. 
             Returns: Dictionary
 
-    self.lastTwoWeeks: Function for the latest AMBS operation announcements or results for the last two weeks.
+    ambs.lastTwoWeeks: Function for the latest AMBS operation announcements or results for the last two weeks.
             Returns: Dictionary
 
-    self.last: Function for the latest AMBS operation announcements or results for the last n operations.
+    ambs.last: Function for the latest AMBS operation announcements or results for the last n operations.
             Returns: Dictionary
 
-    self.search: Function to search for AMBS operation announcements or results within the last two years.
+    ambs.search: Function to search for AMBS operation announcements or results within the last two years.
             Returns: Dictionary
 
     Examples
@@ -762,13 +763,13 @@ class CentralBankSwaps:
 
     Attributes
     ----------
-    self.latest: Function for returning central bank liquidity swaps for the current day.
+    swaps.latest: Function for returning central bank liquidity swaps for the current day.
             Returns: Dictionary
-    self.last: Function for returning the last N number of liquidity swaps operations results.
+    swaps.last: Function for returning the last N number of liquidity swaps operations results.
             Returns: Dictionary
-    self.counterparties: List of counterparties of liquidity swaps operations.
+    swaps.counterparties: List of counterparties of liquidity swaps operations.
             Returns: List
-    self.search: Function for searching for liquidity swaps operations.
+    swaps.search: Function for searching for liquidity swaps operations.
             Returns: Dictionary
     
     Example
@@ -947,21 +948,21 @@ class PrimaryDealerStatistics:
 
     Attributes
     ----------
-    self.all_timeseries: Function for returning all survey results.
+    pds.all_timeseries: Function for returning all survey results.
             Returns: pd.DataFrame
-    self.list_descriptions: Function for returning descriptions for all timeseries.
+    pds.list_descriptions: Function for returning descriptions for all timeseries.
             Returns: Dict
-    self.list_asof_dates: Function for returning asof dates with respective series breaks.
+    pds.list_asof_dates: Function for returning asof dates with respective series breaks.
             Returns: Dict
-    self.list_seriesbreaks: Function for returning Series Breaks including Label, Start and End Date.
+    pds.list_seriesbreaks: Function for returning Series Breaks including Label, Start and End Date.
             Returns: Dict
-    self.list_timeseries: Function for returing all timeseries' key IDs.
+    pds.list_timeseries: Function for returing all timeseries' key IDs.
             Returns: List
-    self.get_latest: Function for returning the latest Survey results for each timeseries and Series Break.
+    pds.get_latest: Function for returning the latest Survey results for each timeseries and Series Break.
             Returns: Dict
-    self.get_asof: Function for returning survey results from a single date.
+    pds.get_asof: Function for returning survey results from a single date.
             Returns: Dict
-    self.get_timeseries: Function for returning the timeseries for a specific key ID.
+    pds.get_timeseries: Function for returning the timeseries for a specific key ID.
             Returns: pd.DataFrame
 
     Examples
@@ -1217,15 +1218,15 @@ class ReferenceRates:
 
     Attributes
     ----------
-    self.get_latest: Function for returning the latest secured and unsecured rates.
+    rates.get_latest: Function for returning the latest secured and unsecured rates.
             Returns: pd.DataFrame
-    self.search: Function for returning secured and/or unsecured rates and/or volume by date range.
+    rates.search: Function for returning secured and/or unsecured rates and/or volume by date range.
             Returns: pd.DataFrame
-    self.get_secured: Function for returning the latest secured rates.
+    rates.get_secured: Function for returning the latest secured rates.
             Returns: pd.DataFrame
-    self.get_unsecured: Function for returning the latest unsecured rates.
+    rates.get_unsecured: Function for returning the latest unsecured rates.
             Returns: pd.DataFrame
-    self.last: Function for returning the last N number of rates for a single type.
+    rates.last: Function for returning the last N number of rates for a single type.
             Returns: pd.DataFrame
 
     Examples
@@ -1378,11 +1379,11 @@ class RepoOperations:
 
     Attributes
     ----------
-    self.get_latest: Function for returning the latest Repo and/or Reverse Repo operations Announcements or Results for the current day.
+    repo.get_latest: Function for returning the latest Repo and/or Reverse Repo operations Announcements or Results for the current day.
             Returns: Dict
-    self.search: Function for searching for Repo and/or Reverse Repo operations.
+    repo.search: Function for searching for Repo and/or Reverse Repo operations.
             Returns: Dict
-    self.get_propositions: Function for returning propositions for a given date range.
+    repo.get_propositions: Function for returning propositions for a given date range.
             Returns: Dict
 
     Examples
@@ -1594,9 +1595,9 @@ class SecuritiesLending:
 
     Attributes
     ----------
-    self.get_latest: Function for getting the latest securities lending operations.
+    lending.get_latest: Function for getting the latest securities lending operations.
             Returns: Dict
-    self.search: Function for searching for securities lending operations.
+    lending.search: Function for searching for securities lending operations.
             Returns: Dict
 
     Examples
@@ -1742,13 +1743,13 @@ class SOMAHoldings:
 
     Attributes
     ----------
-    self.get_release_log: Function for getting the last three months of Angency Release and As Of Dates.
+    soma.get_release_log: Function for getting the last three months of Angency Release and As Of Dates.
             Returns: Dict
-    self.get_agency_holdings: Function for getting the latest agency holdings, or as of a single date.
+    soma.get_agency_holdings: Function for getting the latest agency holdings, or as of a single date.
             Returns: Dict
-    self.get_treasury_holdings: Function for getting the latest Treasury holdings, or as of a single date.
+    soma.get_treasury_holdings: Function for getting the latest Treasury holdings, or as of a single date.
             Returns: Dict
-    self.summary: Function for getting the summary Of SOMA holdings for each As of Date and holding type.
+    soma.summary: Function for getting the summary Of SOMA holdings for each As of Date and holding type.
             Returns: pd.DataFrame
     Examples
     --------
@@ -1972,9 +1973,9 @@ class TreasurySecurityOperations:
 
     Attributes
     ----------
-    self.get_latest: Function for returning the latest Treasury operation Announcements or Results for the current day, previous two weeks, or last N Operations.
+    treasury.get_latest: Function for returning the latest Treasury operation Announcements or Results for the current day, previous two weeks, or last N Operations.
             Returns: dict
-    self.search: Function for searching Treasury operations for a given security type, start date, end date, or CUSIP.
+    treasury.search: Function for searching Treasury operations for a given security type, start date, end date, or CUSIP.
             Returns: dict
 
     Examples

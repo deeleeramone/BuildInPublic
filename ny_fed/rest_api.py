@@ -1024,7 +1024,7 @@ class PrimaryDealerStatistics:
         descriptions = pd.read_json(url)['pd']['timeseries']
 
         if not descriptions is None:
-            return descriptions
+            return pd.DataFrame(descriptions)[['keyid','description']].set_index('keyid').to_dict()
 
         else:
             print("There was an error with the request. Please try again later.")
@@ -2137,7 +2137,7 @@ class TreasurySecurityOperations:
 
 
 class RestAPI:
-    """Class for interacting with the REST API.
+    """Class for interacting with the NY Federal Reserve REST API.
 
     Attributes
     ----------

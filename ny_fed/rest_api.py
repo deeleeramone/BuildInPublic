@@ -1157,13 +1157,13 @@ class PrimaryDealerStatistics:
         TIMESERIES = list_timeseries()
         """
 
-        return (pd.DataFrame.from_records(self.list_descriptions())['keyid'].to_list())
+        return (pd.DataFrame.from_records(self.list_descriptions()).index.to_list())
 
 
     def get_timeseries(
         self,
         key_id: str = "PDSOOS-ABSTOT",
-        seriesbreak: Optional[str] = ""
+        seriesbreak: Optional[str] = "",
     ) -> pd.DataFrame:
         """Returns a timeseries of a specific key ID.
 
@@ -1188,23 +1188,23 @@ class PrimaryDealerStatistics:
         if key_id not in self.list_timeseries():
             print("Invalid key ID. To print all valid key IDs, use: list_timeseries()")
             return
-            
+
         if seriesbreak != "":
             if seriesbreak not in SERIESBREAKS:
                 print("Invalid Series Break. Choose from: ", SERIESBREAKS)
                 return
-
-            url = get_endpoints(
-                pd_timeseries = key_id,
-                pd_seriesbreak = seriesbreak
-            )["Primary Dealer Statistics"]["get_timeseries_seriesbreak"]
+            else:
+                url = get_endpoints(
+                    pd_timeseries = key_id,
+                    pd_seriesbreak = seriesbreak
+                )["Primary Dealer Statistics"]["get_timeseries_seriesbreak"]
 
         else:
             url = get_endpoints(
                 pd_timeseries = key_id
             )["Primary Dealer Statistics"]["get_timeseries"]
 
-        timeseries = pd.read_json(url)['pd']['timeseries']
+        timeseries = pd.read_json(url)['pd'][0]
 
         if timeseries == []:
             print("Invalid key ID. To print all valid key IDs, use: list_timeseries()")

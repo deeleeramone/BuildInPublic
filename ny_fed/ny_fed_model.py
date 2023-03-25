@@ -2,12 +2,42 @@
 
 from typing import Optional
 import pandas as pd
-from ny_fed.rest_api import RestAPI
+from rest_api import RestAPI
 
 __docstyle__ = "numpy"
 
 fed_api = RestAPI()
 
+
+# Filterable DataFrame by description of Primary Dealer Statistics Time Series
+PDS_DESCRIPTIONS = (
+    pd.DataFrame.from_dict(fed_api.pds.list_descriptions())
+    .reset_index()
+    .rename(columns={'index': 'Series ID', 'description': 'Description'})
+    .set_index('Description')
+)
+
+def search_pds_descriptions(description: str = "") -> pd.DataFrame:
+    """Search for PDS descriptions and return corresponding Series IDs. Results are case sensitive.
+
+    Parameters
+    ----------
+    description : str = ""
+        Keywords to search for. Results are case sensitive.
+
+    Returns
+    -------
+    pd.DataFrame: Pandas DataFrame with Series IDs and descriptions.
+
+    Examples
+    --------
+    >>> results = search_pds_descriptions(description = "FAILS")
+    
+    >>> results = search_pds_descriptions(description = "ASSET-BACKED")
+    """
+
+    results = PDS_DESCRIPTIONS.filter(like = description, axis = 0)
+    return results
 
 def get_pds_fails(
     change: Optional[bool] = False     
@@ -43,29 +73,26 @@ def get_pds_fails(
         series_d = "PDSI5F-TD"
         series_r = "PDSI5F-TR"
 
-    data = fed_api.pds.all_timeseries()
     pds_fails = pd.DataFrame()
 
     pds_fails_d = (
         pd.DataFrame(
-            data
-            .query("`Time Series` == @series_d")
-        )
-        .set_index('As Of Date')['Value (millions)']
-        .replace('*', '0')
+            fed_api.pds.get_timeseries(series_d)
+        ).rename(columns = {'asofdate': 'As Of Date', 'value': 'Value'})
+        .set_index('As Of Date')['Value'].replace('*', '0')
     )
 
     pds_fails_r = (
         pd.DataFrame(
-            data
-            .query("`Time Series` == @series_r")
+            fed_api.pds.get_timeseries(series_r)
         )
-        .set_index('As Of Date')['Value (millions)']
+        .rename(columns = {'asofdate': 'As Of Date', 'value': 'Value'})
+        .set_index('As Of Date')['Value']
         .replace('*', '0')
     )
 
-    pds_fails["Deliver (millions)"] = pds_fails_d.astype(float)
-    pds_fails["Receive (millions)"] = pds_fails_r.astype(float)
+    pds_fails["Failures to Deliver (Millions of USD)"] = pds_fails_d.astype(float)
+    pds_fails["Failures to Receive (Millions of USD)"] = pds_fails_r.astype(float)
     pds_fails.index = pd.DatetimeIndex(pds_fails.index, yearfirst = True)
 
     return pds_fails

@@ -79,7 +79,9 @@ def get_pds_fails(
         pd.DataFrame(
             fed_api.pds.get_timeseries(series_d)
         ).rename(columns = {'asofdate': 'As Of Date', 'value': 'Value'})
-        .set_index('As Of Date')['Value'].replace('*', '0')
+        .set_index('As Of Date')['Value']
+        .replace('*', '0')
+        .replace('N/A', '0')
     )
 
     pds_fails_r = (
@@ -89,6 +91,7 @@ def get_pds_fails(
         .rename(columns = {'asofdate': 'As Of Date', 'value': 'Value'})
         .set_index('As Of Date')['Value']
         .replace('*', '0')
+        .replace('N/A', '0')
     )
 
     pds_fails["Failures to Deliver (Millions of USD)"] = pds_fails_d.astype(float)

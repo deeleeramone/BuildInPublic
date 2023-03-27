@@ -13,9 +13,10 @@ fed_api = RestAPI()
 PDS_DESCRIPTIONS = (
     pd.DataFrame.from_dict(fed_api.pds.list_descriptions())
     .reset_index()
-    .rename(columns={'index': 'Series ID', 'description': 'Description'})
-    .set_index('Description')
+    .rename(columns={"index": "Series ID", "description": "Description"})
+    .set_index("Description")
 )
+
 
 def search_pds_descriptions(description: str = "") -> pd.DataFrame:
     """Search for PDS descriptions and return corresponding Series IDs. Results are case sensitive.
@@ -32,12 +33,13 @@ def search_pds_descriptions(description: str = "") -> pd.DataFrame:
     Examples
     --------
     >>> results = search_pds_descriptions(description = "FAILS")
-    
+
     >>> results = search_pds_descriptions(description = "ASSET-BACKED")
     """
 
-    results = PDS_DESCRIPTIONS.filter(like = description, axis = 0)
+    results = PDS_DESCRIPTIONS.filter(like=description, axis=0)
     return results
+
 
 def get_pds_fails(
     ftd: Optional[bool] = False,
@@ -90,10 +92,11 @@ def get_pds_fails(
     asset_type: Optional[str] = ""
         Returns fails-to-deliver and fails-to-receive for the specified asset class. This parameter is overriden by setting, ftd or ftr, as true.
     weights: Optional[bool] = False
-        Flag to return the percent value weighting for each asset class against the total. 
+        Flag to return the percent value weighting for each asset class against the total.
         This parameter must be used in confunction with, ftd or ftr, and when activated, overrides the asset_type parameter.
     passthrough: Optional[bool] = False
-        Flag to return the passthrough rate of fails-to-deliver vs. fails-to-receive. This parameter overrides the weights and asset_type parameters.
+        Flag to return the passthrough rate, the ratio of fails-to-deliver as a percentage of fails-to-receive.
+        This parameter overrides the weights and asset_type parameters.
 
     Returns
     -------
@@ -107,14 +110,28 @@ def get_pds_fails(
 
     >>> pds_ftds = get_pds_fails(ftd = True)
 
-    The proportional weighting of each asset class is returned by setting, weights = True 
+    The proportional weighting of each asset class is returned by setting, weights = True .
 
     >>> pds_ftds = get_pds_fails(ftd = True, weights = True)
+
+    The ratio of fails-to-deliver as a percentage of fails-to-receive is returned by setting, passthrough = True.
+
+    >>> pds_ftds = get_pds_fails(passthrough = True)
     """
 
-    ASSET_CLASSES = ["US Treasuries", "Agency Notes and Coupons", "MBS", "Corporate Securities"]
+    ASSET_CLASSES = [
+        "US Treasuries",
+        "Agency Notes and Coupons",
+        "MBS",
+        "Corporate Securities",
+    ]
 
-    all_data = fed_api.pds.all_timeseries().set_index('As Of Date').replace('*', '0').sort_index()
+    all_data = (
+        fed_api.pds.all_timeseries()
+        .set_index("As Of Date")
+        .replace("*", "0")
+        .sort_index()
+    )
 
     ftd_cols = [
         "FTDs - Corporate Securities",
@@ -144,39 +161,89 @@ def get_pds_fails(
     ]
 
     data = pd.DataFrame()
-    data["FTDs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTD-CS'")["Value (millions)"].astype(float)
-    data["FTRs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTR-CS'")["Value (millions)"].astype(float)
-    data["FTDs - Agency and GSE Securities (Ex-MBS)"] = all_data.query("`Time Series` == 'PDFTD-FGEM'")["Value (millions)"].astype(float)
-    data["FTRs - Agency and GSE Securities (Ex-MBS)"] = all_data.query("`Time Series` == 'PDFTR-FGEM'")["Value (millions)"].astype(float)
-    data["FTDs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTD-FGM'")["Value (millions)"].astype(float)
-    data["FTRs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTR-FGM'")["Value (millions)"].astype(float)
-    data["FTDs - Other MBS"] = all_data.query("`Time Series` == 'PDFTD-OM'")["Value (millions)"].astype(float)
-    data["FTRs - Other MBS"] = all_data.query("`Time Series` == 'PDFTR-OM'")["Value (millions)"].astype(float)
-    data["FTDs - TIPS"] = all_data.query("`Time Series` == 'PDFTD-UST'")["Value (millions)"].astype(float)
-    data["FTRs - TIPS"] = all_data.query("`Time Series` == 'PDFTR-UST'")["Value (millions)"].astype(float)
-    data["FTDs - Treasury Securities (Ex-TIPS)"] = all_data.query("`Time Series` == 'PDFTD-USTET'")["Value (millions)"].astype(float)
-    data["FTRs - Treasury Securities (Ex-TIPS)"] = all_data.query("`Time Series` == 'PDFTR-USTET'")["Value (millions)"].astype(float)
+    data["FTDs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTD-CS'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTRs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTR-CS'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTDs - Agency and GSE Securities (Ex-MBS)"] = all_data.query(
+        "`Time Series` == 'PDFTD-FGEM'"
+    )["Value (millions)"].astype(float)
+    data["FTRs - Agency and GSE Securities (Ex-MBS)"] = all_data.query(
+        "`Time Series` == 'PDFTR-FGEM'"
+    )["Value (millions)"].astype(float)
+    data["FTDs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTD-FGM'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTRs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTR-FGM'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTDs - Other MBS"] = all_data.query("`Time Series` == 'PDFTD-OM'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTRs - Other MBS"] = all_data.query("`Time Series` == 'PDFTR-OM'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTDs - TIPS"] = all_data.query("`Time Series` == 'PDFTD-UST'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTRs - TIPS"] = all_data.query("`Time Series` == 'PDFTR-UST'")[
+        "Value (millions)"
+    ].astype(float)
+    data["FTDs - Treasury Securities (Ex-TIPS)"] = all_data.query(
+        "`Time Series` == 'PDFTD-USTET'"
+    )["Value (millions)"].astype(float)
+    data["FTRs - Treasury Securities (Ex-TIPS)"] = all_data.query(
+        "`Time Series` == 'PDFTR-USTET'"
+    )["Value (millions)"].astype(float)
 
     if ftd and ftr:
         print("Error: Please choose only one of ftd or ftr.")
         return
 
     if passthrough:
-        new_data = pd.DataFrame(columns = weights_cols)
-        new_data["Corporate Securities (%)"] = round((data["FTDs - Corporate Securities"]/data["FTRs - Corporate Securities"]) * 100, ndigits = 2)
-        new_data["Agency and GSE Securites (Ex-MBS) (%)"] = round((data["FTDs - Agency and GSE Securities (Ex-MBS)"]/data["FTRs - Agency and GSE Securities (Ex-MBS)"]) * 100, ndigits = 2)
-        new_data["Agency and GSE MBS (%)"] = round((data["FTDs - Agency and GSE MBS"]/data["FTRs - Agency and GSE MBS"]) * 100, ndigits = 2)
-        new_data["Other MBS (%)"] = round((data["FTDs - Other MBS"]/data["FTRs - Other MBS"]) * 100, ndigits = 2)
-        new_data["TIPS (%)"] = round((data["FTDs - TIPS"]/data["FTRs - TIPS"]) * 100, ndigits = 2)
-        new_data["Treasury Securities (Ex-TIPS) (%)"] = round((data["FTDs - Treasury Securities (Ex-TIPS)"]/data["FTRs - Treasury Securities (Ex-TIPS)"]) * 100, ndigits = 2)
+        new_data = pd.DataFrame(columns=weights_cols)
+        new_data["Corporate Securities (%)"] = round(
+            (data["FTDs - Corporate Securities"] / data["FTRs - Corporate Securities"])
+            * 100,
+            ndigits=2,
+        )
+        new_data["Agency and GSE Securites (Ex-MBS) (%)"] = round(
+            (
+                data["FTDs - Agency and GSE Securities (Ex-MBS)"]
+                / data["FTRs - Agency and GSE Securities (Ex-MBS)"]
+            )
+            * 100,
+            ndigits=2,
+        )
+        new_data["Agency and GSE MBS (%)"] = round(
+            (data["FTDs - Agency and GSE MBS"] / data["FTRs - Agency and GSE MBS"])
+            * 100,
+            ndigits=2,
+        )
+        new_data["Other MBS (%)"] = round(
+            (data["FTDs - Other MBS"] / data["FTRs - Other MBS"]) * 100, ndigits=2
+        )
+        new_data["TIPS (%)"] = round(
+            (data["FTDs - TIPS"] / data["FTRs - TIPS"]) * 100, ndigits=2
+        )
+        new_data["Treasury Securities (Ex-TIPS) (%)"] = round(
+            (
+                data["FTDs - Treasury Securities (Ex-TIPS)"]
+                / data["FTRs - Treasury Securities (Ex-TIPS)"]
+            )
+            * 100,
+            ndigits=2,
+        )
         return new_data
 
     if ftd:
         data = data[ftd_cols].copy()
-        data['FTDs - Sum Total'] = data.sum(axis = 1)
+        data["FTDs - Sum Total"] = data.sum(axis=1)
         if weights:
-            data = round(data.div(data['FTDs - Sum Total'], axis = 0) * 100, ndigits = 2)
-            data = data.drop(columns = ['FTDs - Sum Total'])
+            data = round(data.div(data["FTDs - Sum Total"], axis=0) * 100, ndigits=2)
+            data = data.drop(columns=["FTDs - Sum Total"])
             data.columns = weights_cols
             return data
 
@@ -184,10 +251,10 @@ def get_pds_fails(
 
     if ftr:
         data = data[ftr_cols].copy()
-        data['FTRs - Sum Total'] = data.sum(axis = 1)
+        data["FTRs - Sum Total"] = data.sum(axis=1)
         if weights:
-            data = round(data.div(data['FTRs - Sum Total'], axis = 0) * 100, ndigits = 2)
-            data = data.drop(columns = ['FTRs - Sum Total'])
+            data = round(data.div(data["FTRs - Sum Total"], axis=0) * 100, ndigits=2)
+            data = data.drop(columns=["FTRs - Sum Total"])
             data.columns = weights_cols
             return data
 

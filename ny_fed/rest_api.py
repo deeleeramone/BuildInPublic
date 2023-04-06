@@ -1226,7 +1226,7 @@ class ReferenceRates:
             Returns: pd.DataFrame
     rates.get_unsecured: Function for returning the latest unsecured rates.
             Returns: pd.DataFrame
-    rates.last: Function for returning the last N number of rates for a single type.
+    rates.get_rate: Function for returning historical data for a single type of secured or unsecured rate.
             Returns: pd.DataFrame
 
     Examples
@@ -1234,10 +1234,16 @@ class ReferenceRates:
     >>> rates = ReferenceRates()
 
     >>> latest = rates.get_latest()
+    
+    >>> sofr = rates.rate()
     """
     def __init__(self) -> None:
 
         self.get_latest
+        self.search
+        self.get_secured
+        self.get_unsecured
+        self.get_rate
 
 
     def get_latest(self) -> pd.DataFrame:
@@ -1341,37 +1347,55 @@ class ReferenceRates:
         return unsecured
 
 
-    def get_last(
+    def get_rate(
         self,
-        ratetype: Optional[str] = "sofr",
-        number: Optional[int] = 0,
+        rate_type: Optional[str] = "sofr",
+        n_days: Optional[int] = 0,
     ) -> pd.DataFrame:
-        
+        """Gets the last N number of days of historical data for a specfic type of secured or unsecured rate.
+        Data returned is the rate, quartiles, and volume in billions for each day.
+
+        Parameters
+        ----------
+        rate_type: Optional[str] = "sofr"
+            The type of rate to return. Choices are: ['tgcr', 'bgcr', 'sofr', 'sofrai', 'effr', 'obfr']. Default is, "sofr".
+        n_days: Optional[int] = 0
+            The number of days to return. Default is 0, which returns all available history.
+
+        Returns
+        -------
+        pd.DataFrame: Pandas DataFrame with historical data.
+
+        Example
+        -------
+        >>> sofr = get_rate(rate_type = 'sofr')
+        """
+
         TYPES = SECURED_RATE_TYPES+UNSECURED_RATE_TYPES
         
-        if number < 0:
+        if n_days < 0:
             print("Invalid choice. Number must be positive.")
             return
         
-        if ratetype not in TYPES:
+        if rate_type not in TYPES:
             print("Invalid Choice. Choose from: ", TYPES)
             return
         
-        if ratetype in SECURED_RATE_TYPES:
+        if rate_type in SECURED_RATE_TYPES:
             url = get_endpoints(
-                secured_type = ratetype,
-                n_operations = number,
+                secured_type = rate_type,
+                n_operations = n_days,
             )["Reference Rates"]["last_secured"]
         
-        elif ratetype in UNSECURED_RATE_TYPES:    
+        elif rate_type in UNSECURED_RATE_TYPES:    
             url = get_endpoints(
-                unsecured_type = ratetype,
-                n_operations = number,
+                unsecured_type = rate_type,
+                n_operations = n_days,
             )["Reference Rates"]["last_unsecured"]
 
-        last = pd.DataFrame.from_records(pd.read_json(url)['refRates'])
+        rate = pd.DataFrame.from_records(pd.read_json(url)['refRates'])
 
-        return last
+        return rate
 
 
 class RepoOperations:
@@ -1398,6 +1422,8 @@ class RepoOperations:
     def __init__(self) -> None:
 
         self.get_latest
+        self.search
+        self.get_propositions
 
     def get_latest(
         self,
@@ -1614,6 +1640,7 @@ class SecuritiesLending:
     def __init__(self) -> None:
 
         self.get_latest
+        self.search
 
     def get_latest(
         self,

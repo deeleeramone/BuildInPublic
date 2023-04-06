@@ -2026,7 +2026,7 @@ class TreasurySecurityOperations:
         status: Optional[str] = "results",
         include: Optional[str] = "details",
         lastTwoWeeks: Optional[bool] = False,
-        last_N: Optional[int] = None,
+        n_operations: Optional[int] = 1,
     ) -> dict:
         """Returns the latest Treasury operation Announcements or Results for the current day, previous two weeks, or last N Operations.
 
@@ -2040,8 +2040,8 @@ class TreasurySecurityOperations:
             The level of detail to return. Choices are: ["details", "summary"]
         lastTwoWeeks: Optional[bool] = False
             Whether to return the last two weeks of operations. This behaviour overrides. Defaults to False. 
-        last_N: Optional[int] = None
-            The number of last N operations to return. Defaults to None.
+        n_operations: Optional[int] = 1
+            The number of last N operations to return. Defaults to 1.
 
         Returns
         -------
@@ -2051,26 +2051,26 @@ class TreasurySecurityOperations:
         --------
         >>> treasuries = get_latest(lastTwoWeeks = True)
 
-        >>> purchases = get_latest(last_N = 90, operation_type = "purchases")
+        >>> purchases = get_latest(n_operations = 90, operation_type = "purchases")
         """
-
-        if lastTwoWeeks == True:
-            url = get_endpoints(treasury_status = status)["Treasury Securities Operations"]["lastTwoWeeks"]
-            return (pd.read_json(url)["treasury"]["auctions"])
 
         if operation_type not in TREASURY_OPERATION_TYPES:
             print("Invalid choice. Choose from: ", TREASURY_OPERATION_TYPES)
             return
 
+        if lastTwoWeeks == True:
+            url = get_endpoints(treasury_status = status)["Treasury Securities Operations"]["lastTwoWeeks"]
+            return (pd.read_json(url)["treasury"]["auctions"])
+
         if status not in TREASURY_STATUS_TYPES:
             print("Invalid choice. Choose from: ", TREASURY_STATUS_TYPES)
             return
 
-        if last_N:
+        if n_operations:
             url = get_endpoints(
                 treasury_operation = operation_type,
                 details = include,
-                n_operations = last_N
+                n_operations = n_operations
             )["Treasury Securities Operations"]["last"]
             return (pd.read_json(url)["treasury"]["auctions"])
 

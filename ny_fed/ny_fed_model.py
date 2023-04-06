@@ -1,6 +1,7 @@
 """Model for NY Fed Data"""
-
+#%%
 from typing import Optional
+import numpy as np
 import pandas as pd
 from rest_api import RestAPI
 
@@ -41,7 +42,7 @@ def search_pds_descriptions(description: str = "") -> pd.DataFrame:
     return results
 
 
-def get_pds_fails(
+def get_fails(
     ftd: Optional[bool] = False,
     ftr: Optional[bool] = False,
     asset_type: Optional[str] = "",
@@ -104,19 +105,19 @@ def get_pds_fails(
 
     Examples
     --------
-    >>> pds_fails = get_pds_fails()
+    >>> fails = get_fails()
 
     Deliver and Receive Fails can be separated by setting, ftd or ftr, as true.
 
-    >>> pds_ftds = get_pds_fails(ftd = True)
+    >>> ftds = get_fails(ftd = True)
 
     The proportional weighting of each asset class is returned by setting, weights = True .
 
-    >>> pds_ftds = get_pds_fails(ftd = True, weights = True)
+    >>> ftd_percent = get_fails(ftd = True, weights = True)
 
     The ratio of fails-to-deliver as a percentage of fails-to-receive is returned by setting, passthrough = True.
 
-    >>> pds_ftds = get_pds_fails(passthrough = True)
+    >>> fails_passthrough = get_pds_fails(passthrough = True)
     """
 
     ASSET_CLASSES = [
@@ -271,15 +272,119 @@ def get_pds_fails(
     if asset_type and asset_type == "Agency Notes and Coupons":
         return data.iloc[:, 2:4]
 
-    if asset_type and asset_type == "Agency MBS":
+    if asset_type and asset_type == "MBS":
         return data.iloc[:, 4:8]
 
     if asset_type and asset_type == "US Treasuries":
         return data.iloc[:, 8:12]
 
     return data
+#%%
+def get_fails_mbs_class_a_2022(
+    umbs: Optional[bool] = True,
+    data_type: Optional[str] = "Outright",
+    total: Optional[bool] = False,
+    ) -> pd.DataFrame:
+    """Gets a time series of MBS Class A Settlement Fails and Transactions by yield.
 
+    Data are updated on Thursdays at approximately 4:15 p.m. with the previous week's statistics.
+    All figures are in millions of USD.  The Series IDs used in this function are:
 
+    "PDCAFNMAFHLMC" : "CLASS A, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FNMA/FHLMC UMBS FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
+
+    "PDCAFHLMCNONUMBS" : "CLASS A, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FHLMC (NON-UMBS) FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
+
+    Each series is broken down by % yield. Total as true will return the series with total Fails-to-Receive and Fails-to-Deliver for both UMBS and non-UMBS.
+
+    Parameters
+    ----------
+    umbs: Optional[bool] = True
+        Whether to return the series for UMBS or non-UMBS. Defaults to True.
+    data_type : str
+        The type of data to return. Choices are: ["FTR", FTD", "Outright", "Dollar Roll"]. Defaults to "Outright".
+    total: Optional[bool] = False
+        If true, returns the totals for both UMBS and non-UMBS FTRs and FTDs. Defaults to False.
+
+    Returns
+    -------
+    pd.DataFrame: Pandas DataFrame with results.
+
+    Examples
+    --------
+    >>> mbs_ftds = get_fails_mbs_class_a_2022(data_type = "FTD")
+    
+    >>> mbs_ftrs = get_fails_mbs_class_a_2022(data_type = "FTR")
+
+    >>> mbs_total = get_fails_mbs_class_a_2022(total = True)
+
+    >>> non_umbs_outright = get_fails_mbs_class_a_2022(data_type = "Outright", umbs = False)
+    """
+
+    all_data = (
+        fed_api.pds.all_timeseries()
+        .set_index("As Of Date")
+        .replace("*", "0")
+        .sort_index()
+    )
+    data = pd.DataFrame()
+    DATA_TYPES = {"FTR":"FR", "FTD":"FD", "Outright":"OUT", "Dollar Roll": "DR"}
+    
+    if data_type not in DATA_TYPES.keys():
+        print("Invalid choice. Choose from", DATA_TYPES.keys())
+        return
+    
+    if total:
+        data["FNMA/FHLMC UMBS FAILS TO RECEIVE"] = all_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
+            "Value (millions)"
+        ].astype(float)
+        data["FNMA/FHLMC UMBS FAILS TO DELIVER"] = all_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
+            "Value (millions)"
+        ].astype(float)
+        data["FHLMC (NON-UMBS) FAILS TO RECEIVE"] = all_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
+            "Value (millions)"
+        ].astype(float)
+        data["FHLMC (NON-UMBS) FAILS TO DELIVER"] = all_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
+            "Value (millions)"
+        ].astype(float)
+        return data
+
+    seriesid = "PDCAFNMAFHLMC" if umbs else "PDCAFHLMCNONUMBS"
+    series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+
+    data["<2.5%"] = all_data.query("`Time Series` == @series_id+'L25'")[
+        "Value (millions)"
+    ].astype(float)
+    data["2.5%"] = all_data.query("`Time Series` == @series_id+'25'")[
+        "Value (millions)"
+    ].astype(float)
+    data["3.0%"] = all_data.query("`Time Series` == @series_id+'30'")[
+        "Value (millions)"
+    ].astype(float)
+    data["3.5%"] = all_data.query("`Time Series` == @series_id+'35'")[
+        "Value (millions)"
+    ].astype(float)
+    data["4.0%"] = all_data.query("`Time Series` == @series_id+'40'")[
+        "Value (millions)"
+    ].astype(float)
+    data["4.5%"] = all_data.query("`Time Series` == @series_id+'45'")[
+        "Value (millions)"
+    ].astype(float)
+    data["5.0%"] = all_data.query("`Time Series` == @series_id+'50'")[
+        "Value (millions)"
+    ].astype(float)
+    data["5.5%"] = all_data.query("`Time Series` == @series_id+'55'")[
+        "Value (millions)"
+    ].astype(float)
+    data["6.0%"] = all_data.query("`Time Series` == @series_id+'60'")[
+        "Value (millions)"
+    ].astype(float)
+    data[">6.0%"] = all_data.query("`Time Series` == @series_id+'G60'")[
+        "Value (millions)"
+    ].astype(float)
+
+    return data
+
+#%%
 def get_dealer_position_abs() -> pd.DataFrame:
     """Gets a time series of Primary Dealer Positions, for Asset Backed Securities, by Type.
 
@@ -975,3 +1080,5 @@ def get_dealer_position_state_municipal() -> pd.DataFrame:
     )
 
     return dealer_position_state_municipal
+
+# %%

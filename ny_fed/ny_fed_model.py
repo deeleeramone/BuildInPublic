@@ -18,6 +18,12 @@ PDS_DESCRIPTIONS = (
     .set_index("Description")
 )
 
+all_pds_data = (
+    fed_api.pds.all_timeseries()
+    .set_index("As Of Date")
+    .replace("*", "0")
+    .sort_index()
+)
 
 def search_pds_descriptions(description: str = "") -> pd.DataFrame:
     """Search for Primary Dealer Statistics descriptions. Results are case sensitive.
@@ -127,13 +133,6 @@ def get_fails(
         "Corporate Securities",
     ]
 
-    all_data = (
-        fed_api.pds.all_timeseries()
-        .set_index("As Of Date")
-        .replace("*", "0")
-        .sort_index()
-    )
-
     ftd_cols = [
         "FTDs - Corporate Securities",
         "FTDs - Agency and GSE Securities (Ex-MBS)",
@@ -162,40 +161,40 @@ def get_fails(
     ]
 
     data = pd.DataFrame()
-    data["FTDs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTD-CS'")[
+    data["FTDs - Corporate Securities"] = all_pds_data.query("`Time Series` == 'PDFTD-CS'")[
         "Value (millions)"
     ].astype(float)
-    data["FTRs - Corporate Securities"] = all_data.query("`Time Series` == 'PDFTR-CS'")[
+    data["FTRs - Corporate Securities"] = all_pds_data.query("`Time Series` == 'PDFTR-CS'")[
         "Value (millions)"
     ].astype(float)
-    data["FTDs - Agency and GSE Securities (Ex-MBS)"] = all_data.query(
+    data["FTDs - Agency and GSE Securities (Ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTD-FGEM'"
     )["Value (millions)"].astype(float)
-    data["FTRs - Agency and GSE Securities (Ex-MBS)"] = all_data.query(
+    data["FTRs - Agency and GSE Securities (Ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTR-FGEM'"
     )["Value (millions)"].astype(float)
-    data["FTDs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTD-FGM'")[
+    data["FTDs - Agency and GSE MBS"] = all_pds_data.query("`Time Series` == 'PDFTD-FGM'")[
         "Value (millions)"
     ].astype(float)
-    data["FTRs - Agency and GSE MBS"] = all_data.query("`Time Series` == 'PDFTR-FGM'")[
+    data["FTRs - Agency and GSE MBS"] = all_pds_data.query("`Time Series` == 'PDFTR-FGM'")[
         "Value (millions)"
     ].astype(float)
-    data["FTDs - Other MBS"] = all_data.query("`Time Series` == 'PDFTD-OM'")[
+    data["FTDs - Other MBS"] = all_pds_data.query("`Time Series` == 'PDFTD-OM'")[
         "Value (millions)"
     ].astype(float)
-    data["FTRs - Other MBS"] = all_data.query("`Time Series` == 'PDFTR-OM'")[
+    data["FTRs - Other MBS"] = all_pds_data.query("`Time Series` == 'PDFTR-OM'")[
         "Value (millions)"
     ].astype(float)
-    data["FTDs - TIPS"] = all_data.query("`Time Series` == 'PDFTD-UST'")[
+    data["FTDs - TIPS"] = all_pds_data.query("`Time Series` == 'PDFTD-UST'")[
         "Value (millions)"
     ].astype(float)
-    data["FTRs - TIPS"] = all_data.query("`Time Series` == 'PDFTR-UST'")[
+    data["FTRs - TIPS"] = all_pds_data.query("`Time Series` == 'PDFTR-UST'")[
         "Value (millions)"
     ].astype(float)
-    data["FTDs - Treasury Securities (Ex-TIPS)"] = all_data.query(
+    data["FTDs - Treasury Securities (Ex-TIPS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTD-USTET'"
     )["Value (millions)"].astype(float)
-    data["FTRs - Treasury Securities (Ex-TIPS)"] = all_data.query(
+    data["FTRs - Treasury Securities (Ex-TIPS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTR-USTET'"
     )["Value (millions)"].astype(float)
 
@@ -281,14 +280,14 @@ def get_fails(
     return data
 #%%
 def get_fails_mbs_class_a_2022(
+    mbs_class: Optional[str] = "A",
     umbs: Optional[bool] = True,
     data_type: Optional[str] = "Outright",
     total: Optional[bool] = False,
     ) -> pd.DataFrame:
     """Gets a time series of MBS Class A Settlement Fails and Transactions by yield.
 
-    Data are updated on Thursdays at approximately 4:15 p.m. with the previous week's statistics.
-    All figures are in millions of USD.  The Series IDs used in this function are:
+    Data are updated on monthly.  All figures are in millions of USD.  The Series IDs used in this function are:
 
     "PDCAFNMAFHLMC" : "CLASS A, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FNMA/FHLMC UMBS FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
 
@@ -320,69 +319,70 @@ def get_fails_mbs_class_a_2022(
     >>> non_umbs_outright = get_fails_mbs_class_a_2022(data_type = "Outright", umbs = False)
     """
 
-    all_data = (
-        fed_api.pds.all_timeseries()
-        .set_index("As Of Date")
-        .replace("*", "0")
-        .sort_index()
-    )
     data = pd.DataFrame()
     DATA_TYPES = {"FTR":"FR", "FTD":"FD", "Outright":"OUT", "Dollar Roll": "DR"}
+    MBS_CLASSES = ["A", "B", "C"]
+    
+    if mbs_class.upper() not in MBS_CLASSES:
+        print("Invalid choice. Choose from", MBS_CLASSES)
     
     if data_type not in DATA_TYPES.keys():
         print("Invalid choice. Choose from", DATA_TYPES.keys())
         return
-    
-    if total:
-        data["FNMA/FHLMC UMBS FAILS TO RECEIVE"] = all_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
+
+    if mbs_class.upper() == "A":
+        if total:
+            data["FNMA/FHLMC UMBS FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC UMBS FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FHLMC (NON-UMBS) FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FHLMC (NON-UMBS) FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
+                "Value (millions)"
+            ].astype(float)
+            return data
+
+        seriesid = "PDCAFNMAFHLMC" if umbs else "PDCAFHLMCNONUMBS"
+        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+
+        data["<2.5%"] = all_pds_data.query("`Time Series` == @series_id+'L25'")[
             "Value (millions)"
         ].astype(float)
-        data["FNMA/FHLMC UMBS FAILS TO DELIVER"] = all_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
+        data["2.5%"] = all_pds_data.query("`Time Series` == @series_id+'25'")[
             "Value (millions)"
         ].astype(float)
-        data["FHLMC (NON-UMBS) FAILS TO RECEIVE"] = all_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
+        data["3.0%"] = all_pds_data.query("`Time Series` == @series_id+'30'")[
             "Value (millions)"
         ].astype(float)
-        data["FHLMC (NON-UMBS) FAILS TO DELIVER"] = all_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
+        data["3.5%"] = all_pds_data.query("`Time Series` == @series_id+'35'")[
             "Value (millions)"
         ].astype(float)
+        data["4.0%"] = all_pds_data.query("`Time Series` == @series_id+'40'")[
+            "Value (millions)"
+        ].astype(float)
+        data["4.5%"] = all_pds_data.query("`Time Series` == @series_id+'45'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.0%"] = all_pds_data.query("`Time Series` == @series_id+'50'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.5%"] = all_pds_data.query("`Time Series` == @series_id+'55'")[
+            "Value (millions)"
+        ].astype(float)
+        data["6.0%"] = all_pds_data.query("`Time Series` == @series_id+'60'")[
+            "Value (millions)"
+        ].astype(float)
+        data[">6.0%"] = all_pds_data.query("`Time Series` == @series_id+'G60'")[
+            "Value (millions)"
+        ].astype(float)
+
         return data
 
-    seriesid = "PDCAFNMAFHLMC" if umbs else "PDCAFHLMCNONUMBS"
-    series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
-
-    data["<2.5%"] = all_data.query("`Time Series` == @series_id+'L25'")[
-        "Value (millions)"
-    ].astype(float)
-    data["2.5%"] = all_data.query("`Time Series` == @series_id+'25'")[
-        "Value (millions)"
-    ].astype(float)
-    data["3.0%"] = all_data.query("`Time Series` == @series_id+'30'")[
-        "Value (millions)"
-    ].astype(float)
-    data["3.5%"] = all_data.query("`Time Series` == @series_id+'35'")[
-        "Value (millions)"
-    ].astype(float)
-    data["4.0%"] = all_data.query("`Time Series` == @series_id+'40'")[
-        "Value (millions)"
-    ].astype(float)
-    data["4.5%"] = all_data.query("`Time Series` == @series_id+'45'")[
-        "Value (millions)"
-    ].astype(float)
-    data["5.0%"] = all_data.query("`Time Series` == @series_id+'50'")[
-        "Value (millions)"
-    ].astype(float)
-    data["5.5%"] = all_data.query("`Time Series` == @series_id+'55'")[
-        "Value (millions)"
-    ].astype(float)
-    data["6.0%"] = all_data.query("`Time Series` == @series_id+'60'")[
-        "Value (millions)"
-    ].astype(float)
-    data[">6.0%"] = all_data.query("`Time Series` == @series_id+'G60'")[
-        "Value (millions)"
-    ].astype(float)
-
-    return data
+    print("Coming Soon")
 
 #%%
 def get_dealer_position_abs() -> pd.DataFrame:
@@ -409,29 +409,21 @@ def get_dealer_position_abs() -> pd.DataFrame:
 
     dealer_position_abs = pd.DataFrame()
 
-    automobiles = (
-        (fed_api.pds.get_timeseries("PDPOSABS-ALB")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    automobiles = all_pds_data.query("`Time Series` == 'PDPOSABS-ALB'")[
+        "Value (millions)"
+    ].astype(float)
 
-    credit_cards = (
-        (fed_api.pds.get_timeseries("PDPOSABS-CCB")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    credit_cards = all_pds_data.query("`Time Series` == 'PDPOSABS-CCB'")[
+        "Value (millions)"
+    ].astype(float)
 
-    student_loans = (
-        (fed_api.pds.get_timeseries("PDPOSABS-SLB")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    student_loans = all_pds_data.query("`Time Series` == 'PDPOSABS-SLB'")[
+        "Value (millions)"
+    ].astype(float)
 
-    other_assets = (
-        (fed_api.pds.get_timeseries("PDPOSABS-OAB")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    other_assets = all_pds_data.query("`Time Series` == 'PDPOSABS-OAB'")[
+        "Value (millions)"
+    ].astype(float)
 
     abs_cols = ["Automobiles", "Credit Cards", "Student Loans", "Other Assets"]
 
@@ -481,30 +473,21 @@ def get_dealer_position_tips() -> pd.DataFrame:
         "> 6 Years <= 11 Years",
         "> 11 Years",
     ]
+    two_years = all_pds_data.query("`Time Series` == 'PDPOSTIPS-L2'")[
+        "Value (millions)"
+    ].astype(float)
 
-    two_years = (
-        (fed_api.pds.get_timeseries("PDPOSTIPS-L2")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    six_years = all_pds_data.query("`Time Series` == 'PDPOSTIPS-G2'")[
+        "Value (millions)"
+    ].astype(float)
 
-    six_years = (
-        (fed_api.pds.get_timeseries("PDPOSTIPS-G2")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    eleven_years = all_pds_data.query("`Time Series` == 'PDPOSTIPS-G6L11'")[
+        "Value (millions)"
+    ].astype(float)
 
-    eleven_years = (
-        (fed_api.pds.get_timeseries("PDPOSTIPS-G6L11")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
-
-    greater_than_eleven = (
-        (fed_api.pds.get_timeseries("PDPOSTIPS-G11")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    greater_than_eleven = all_pds_data.query("`Time Series` == 'PDPOSTIPS-G11'")[
+        "Value (millions)"
+    ].astype(float)
 
     dealer_position_tips = pd.concat(
         [two_years, six_years, eleven_years, greater_than_eleven], axis=1
@@ -522,7 +505,7 @@ def get_dealer_position_tips() -> pd.DataFrame:
     return dealer_position_tips
 
 
-def get_dealer_position_tbills() -> pd.Series:
+def get_dealer_position_tbills() -> pd.DataFrame:
     """
     Gets a time series of Primary Dealer Positions, for US Treasury Bills.
 
@@ -539,19 +522,12 @@ def get_dealer_position_tbills() -> pd.Series:
     >>> dealer_position_tbills = get_dealer_position_tbills()
     """
 
-    dealer_position_tbills = (
-        (
-            pd.DataFrame(
-                data=fed_api.pds.get_timeseries("PDPOSGS-B"),
-                columns=["asofdate", "value"],
-            )
-        )
-        .set_index("asofdate")["value"]
-        .astype(float)
-    )
+    data = pd.DataFrame()
+    data["T-Bills"] = all_pds_data.query("`Time Series` == 'PDPOSGS-B'")[
+        "Value (millions)"
+    ].astype(float)
 
-    return dealer_position_tbills.rename("T-Bills")
-
+    return data
 
 def get_dealer_position_coupons() -> pd.DataFrame:
     """
@@ -596,45 +572,45 @@ def get_dealer_position_coupons() -> pd.DataFrame:
     dealer_position_coupons = pd.DataFrame()
 
     two_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-L2")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-L2'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     three_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G2L3")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G2L3'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     six_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G3L6")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G3L6'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     seven_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G6L7")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G6L7'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     eleven_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G7L11")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G7L11'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     twenty_one_years = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G11L21")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G11L21'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     greater_than_21 = (
-        (fed_api.pds.get_timeseries("PDPOSGSC-G21")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSGSC-G21'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     dealer_position_coupons = pd.concat(
@@ -665,7 +641,7 @@ def get_dealer_position_coupons() -> pd.DataFrame:
     return dealer_position_coupons
 
 
-def get_dealer_position_frn() -> pd.Series:
+def get_dealer_position_frn() -> pd.DataFrame:
     """Gets a time series of Primary Dealer Positioning for Floating Rate Notes.
 
     "PDPOSGS-BFRN" : "FLOATING RATE NOTES: DEALER POSITION - LONG. - FLOATING RATE NOTES: DEALER POSITION - SHORT."
@@ -681,14 +657,12 @@ def get_dealer_position_frn() -> pd.Series:
     >>> dealer_position_frn = get_dealer_position_frn()
     """
 
-    dealer_position_frn = (
-        pd.DataFrame(fed_api.pds.get_timeseries("PDPOSGS-BFRN")[["asofdate", "value"]])
-        .set_index("asofdate")
-        .rename(columns={"value": "Floating Rate Notes"})
-        .astype(float)
-    )
+    data = pd.DataFrame()
+    data['Floating Rate Notes'] = all_pds_data.query(
+        "`Time Series` == 'PDPOSGS-BFRN'"
+    )["Value (millions)"].astype(float)
 
-    return dealer_position_frn
+    return data
 
 
 def get_dealer_position_discount_notes() -> pd.Series:
@@ -706,15 +680,12 @@ def get_dealer_position_discount_notes() -> pd.Series:
     -------
     >>> dealer_position_discount_notes = get_dealer_position_discount_notes()
     """
+    data = pd.DataFrame()
+    data['Federal Agency Discount Notes (ex-MBS)'] = all_pds_data.query(
+        "`Time Series` == 'PDPOSFGS-DN'"
+    )["Value (millions)"].astype(float)
 
-    dealer_position_discount_notes = (
-        pd.DataFrame(fed_api.pds.get_timeseries("PDPOSFGS-DN")[["asofdate", "value"]])
-        .set_index("asofdate")
-        .rename(columns={"value": "Federal Agency Discount Notes (ex-MBS)"})
-        .astype(float)
-    )
-
-    return dealer_position_discount_notes
+    return data
 
 
 def get_dealer_position_agency_coupons() -> pd.Series:
@@ -733,14 +704,12 @@ def get_dealer_position_agency_coupons() -> pd.Series:
     >>> dealer_position_agency_coupons = get_dealer_position_agency_coupons()
     """
 
-    dealer_position_agency_coupons = (
-        pd.DataFrame(fed_api.pds.get_timeseries("PDPOSFGS-C")[["asofdate", "value"]])
-        .set_index("asofdate")
-        .rename(columns={"value": "Federal Agency Coupons (ex-MBS)"})
-        .astype(float)
-    )
+    data = pd.DataFrame()
+    data['Federal Agency Coupons (ex-MBS)'] = all_pds_data.query(
+        "`Time Series` == 'PDPOSFGS-C'"
+    )["Value (millions)"].astype(float)
 
-    return dealer_position_agency_coupons
+    return data
 
 
 def get_dealer_position_mbs() -> pd.DataFrame:
@@ -782,39 +751,39 @@ def get_dealer_position_mbs() -> pd.DataFrame:
     ]
 
     agency_residential_outrights = (
-        (fed_api.pds.get_timeseries("PDPOSMBSFGS-TBA")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-TBA'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     agency_residential_pools = (
-        (fed_api.pds.get_timeseries("PDPOSMBSFGS-ST")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-ST'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     agency_residential_other = (
-        (fed_api.pds.get_timeseries("PDPOSMBSFGS-OR")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-OR'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     non_agency_residential = (
-        (fed_api.pds.get_timeseries("PDPOSMBSNA-R")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSNA-R'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     agency_cmbs = (
-        (fed_api.pds.get_timeseries("PDPOSMBSFGS-C")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-C'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     non_agency_cmbs = (
-        (fed_api.pds.get_timeseries("PDPOSMBSNA-O")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSMBSNA-O'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     dealer_position_mbs = pd.concat(
@@ -862,14 +831,12 @@ def get_dealer_position_commercial_paper() -> pd.Series:
     >>> dealer_position_commercial_paper = get_dealer_position_commercial_paper()
     """
 
-    dealer_position_commercial_paper = (
-        pd.DataFrame(fed_api.pds.get_timeseries("PDPOSCSCP")[["asofdate", "value"]])
-        .set_index("asofdate")
-        .rename(columns={"value": "Commercial Paper"})
-        .astype(float)
-    )
+    data = pd.DataFrame()
+    data['Commercial Paper'] = all_pds_data.query(
+        "`Time Series` == 'PDPOSCSCP'"
+    )["Value (millions)"].astype(float)
 
-    return dealer_position_commercial_paper
+    return data
 
 
 def get_dealer_position_investment_grade() -> pd.DataFrame:
@@ -905,27 +872,27 @@ def get_dealer_position_investment_grade() -> pd.DataFrame:
     ]
 
     thirteen_months = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-L13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-L13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     five_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-G13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-G5L10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G5L10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     greater_than_ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-G10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     dealer_position_investment_grade = pd.concat(
@@ -974,27 +941,27 @@ def get_dealer_position_junk_grade() -> pd.DataFrame:
     ]
 
     thirteen_months = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-BELL13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELL13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     five_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-BELG13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-BELG5L10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG5L10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     greater_than_ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSCSBND-BELG10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     dealer_position_junk_grade = pd.concat(
@@ -1043,27 +1010,27 @@ def get_dealer_position_state_municipal() -> pd.DataFrame:
     ]
 
     thirteen_months = (
-        (fed_api.pds.get_timeseries("PDPOSSMGO-L13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSSMGO-L13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     five_years = (
-        (fed_api.pds.get_timeseries("PDPOSSMGO-G13")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G13'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSSMGO-G5L10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G5L10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     greater_than_ten_years = (
-        (fed_api.pds.get_timeseries("PDPOSSMGO-G10")[["asofdate", "value"]])
-        .set_index("asofdate")["value"]
-        .astype(float)
+        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G10'")[
+        "Value (millions)"
+    ].astype(float)
     )
 
     dealer_position_state_municipal = pd.concat(
@@ -1080,5 +1047,3 @@ def get_dealer_position_state_municipal() -> pd.DataFrame:
     )
 
     return dealer_position_state_municipal
-
-# %%

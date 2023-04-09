@@ -279,24 +279,32 @@ def get_fails(
 
     return data
 #%%
-def get_fails_mbs_class_a_2022(
+def get_mbs_fails_and_transactions(
     mbs_class: Optional[str] = "A",
     umbs: Optional[bool] = True,
-    data_type: Optional[str] = "Outright",
+    data_type: Optional[str] = "",
     total: Optional[bool] = False,
     ) -> pd.DataFrame:
-    """Gets a time series of MBS Class A Settlement Fails and Transactions by yield.
+    """Gets a time series of MBS Settlement Fails and Transactions by yield and class.
 
-    Data are updated on monthly.  All figures are in millions of USD.  The Series IDs used in this function are:
+    Data are updated on a monthly basis.  All figures are in millions of USD.  The Series IDs used in this function are:
 
     "PDCAFNMAFHLMC" : "CLASS A, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FNMA/FHLMC UMBS FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
 
     "PDCAFHLMCNONUMBS" : "CLASS A, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FHLMC (NON-UMBS) FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
 
+    "PDCBFNMAFHLMC" : "CLASS B, 15-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FNMA/FHLMC UMBS FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
+
+    "PDCBFHLMCNONUMBS" : "CLASS B, 15-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS: FHLMC (NON-UMBS) FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
+
+    "PDCCGNMA" : "CLASS C, 30-YEAR FEDERAL AGENCY AND GSE PASS-THROUGH MBS FAILS TO RECEIVE/DELIVER/OUTRIGHT/DOLLAR ROLL"
+
     Each series is broken down by % yield. Total as true will return the series with total Fails-to-Receive and Fails-to-Deliver for both UMBS and non-UMBS.
 
     Parameters
     ----------
+    mbs_class: Optional[str] = "A"
+        The MBS class to return. Choices are: ["A", "B", "C"]. Defaults to "A".
     umbs: Optional[bool] = True
         Whether to return the series for UMBS or non-UMBS. Defaults to True.
     data_type : str
@@ -310,40 +318,62 @@ def get_fails_mbs_class_a_2022(
 
     Examples
     --------
-    >>> mbs_ftds = get_fails_mbs_class_a_2022(data_type = "FTD")
+    >>> mbs_ftd = get_mbs_fails_and_transactions(data_type = "FTD")
     
-    >>> mbs_ftrs = get_fails_mbs_class_a_2022(data_type = "FTR")
+    >>> mbs_ftr = get_mbs_fails_and_transactions(data_type = "FTR")
 
-    >>> mbs_total = get_fails_mbs_class_a_2022(total = True)
+    >>> mbs_total = get_mbs_fails_and_transactions(total = True)
 
-    >>> non_umbs_outright = get_fails_mbs_class_a_2022(data_type = "Outright", umbs = False)
+    >>> non_umbs_dr = get_mbs_fails_and_transactions(data_type = "Dollar Roll", umbs = False)
+
+    >>> gnma_ftr = get_mbs_fails_and_transactions(mbs_class = "C", data_type = "FTR")
     """
 
     data = pd.DataFrame()
     DATA_TYPES = {"FTR":"FR", "FTD":"FD", "Outright":"OUT", "Dollar Roll": "DR"}
     MBS_CLASSES = ["A", "B", "C"]
-    
+
     if mbs_class.upper() not in MBS_CLASSES:
-        print("Invalid choice. Choose from", MBS_CLASSES)
-    
+        print("Invalid choice for MBS Class. Choose from", MBS_CLASSES)
+        return
+
+    if total and data_type != "":
+        print("Warning: Total as true overrides the choice for data type.")
+
+    if data_type == "":
+        data_type = "Outright"
+
     if data_type not in DATA_TYPES.keys():
         print("Invalid choice. Choose from", DATA_TYPES.keys())
         return
 
     if mbs_class.upper() == "A":
         if total:
-            data["FNMA/FHLMC UMBS FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
+            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
                 "Value (millions)"
             ].astype(float)
-            data["FNMA/FHLMC UMBS FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
+            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
                 "Value (millions)"
             ].astype(float)
-            data["FHLMC (NON-UMBS) FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
                 "Value (millions)"
             ].astype(float)
-            data["FHLMC (NON-UMBS) FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
                 "Value (millions)"
             ].astype(float)
+            data["FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-OUTT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-OUTT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-DRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-DRT'")[
+                "Value (millions)"
+            ].astype(float)
+
             return data
 
         seriesid = "PDCAFNMAFHLMC" if umbs else "PDCAFHLMCNONUMBS"
@@ -382,7 +412,125 @@ def get_fails_mbs_class_a_2022(
 
         return data
 
-    print("Coming Soon")
+    if mbs_class.upper() == "B":
+
+        seriesid = "PDCBFNMAFHLMC" if umbs else "PDCBFHLMCNONUMBS"
+        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+
+        if total:
+            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-FRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-FDT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-FRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-FRD'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-OUTT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-OUTT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-DRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-DRT'")[
+                "Value (millions)"
+            ].astype(float)
+
+            return data
+
+        data["<2.0%"] = all_pds_data.query("`Time Series` == @series_id+'L20'")[
+            "Value (millions)"
+        ].astype(float)
+        data["2.0%"] = all_pds_data.query("`Time Series` == @series_id+'20'")[
+            "Value (millions)"
+        ].astype(float)
+        data["2.5%"] = all_pds_data.query("`Time Series` == @series_id+'25'")[
+            "Value (millions)"
+        ].astype(float)
+        data["3.0%"] = all_pds_data.query("`Time Series` == @series_id+'30'")[
+            "Value (millions)"
+        ].astype(float)
+        data["3.5%"] = all_pds_data.query("`Time Series` == @series_id+'35'")[
+            "Value (millions)"
+        ].astype(float)
+        data["4.0%"] = all_pds_data.query("`Time Series` == @series_id+'40'")[
+            "Value (millions)"
+        ].astype(float)
+        data["4.5%"] = all_pds_data.query("`Time Series` == @series_id+'45'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.0%"] = all_pds_data.query("`Time Series` == @series_id+'50'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.5%"] = all_pds_data.query("`Time Series` == @series_id+'55'")[
+            "Value (millions)"
+        ].astype(float)
+        data[">5.5%"] = all_pds_data.query("`Time Series` == @series_id+'G55'")[
+            "Value (millions)"
+        ].astype(float)
+
+        return data
+
+    if mbs_class.upper() == "C":
+
+        seriesid = "PDCCGNMA"
+        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+
+        if total:
+            data["Class C 30 YEAR GNMA FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-FRT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["Class C 30 YEAR GNMA FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-FDT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (OUTRIGHT)"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-OUTT'")[
+                "Value (millions)"
+            ].astype(float)
+            data["Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-DRT'")[
+                "Value (millions)"
+            ].astype(float)
+
+            return data
+
+        data["<2.5%"] = all_pds_data.query("`Time Series` == @series_id+'L25'")[
+            "Value (millions)"
+        ].astype(float)
+        data["2.5%"] = all_pds_data.query("`Time Series` == @series_id+'25'")[
+            "Value (millions)"
+        ].astype(float)
+        data["3.0%"] = all_pds_data.query("`Time Series` == @series_id+'30'")[
+            "Value (millions)"
+        ].astype(float)
+        data["3.5%"] = all_pds_data.query("`Time Series` == @series_id+'35'")[
+            "Value (millions)"
+        ].astype(float)
+        data["4.0%"] = all_pds_data.query("`Time Series` == @series_id+'40'")[
+            "Value (millions)"
+        ].astype(float)
+        data["4.5%"] = all_pds_data.query("`Time Series` == @series_id+'45'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.0%"] = all_pds_data.query("`Time Series` == @series_id+'50'")[
+            "Value (millions)"
+        ].astype(float)
+        data["5.5%"] = all_pds_data.query("`Time Series` == @series_id+'55'")[
+            "Value (millions)"
+        ].astype(float)
+        data["6.0%"] = all_pds_data.query("`Time Series` == @series_id+'60'")[
+            "Value (millions)"
+        ].astype(float)
+        data[">6.0%"] = all_pds_data.query("`Time Series` == @series_id+'G60'")[
+            "Value (millions)"
+        ].astype(float)
+
+        return data
 
 #%%
 def get_dealer_position_abs() -> pd.DataFrame:

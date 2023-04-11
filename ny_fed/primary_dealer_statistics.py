@@ -1,9 +1,9 @@
-"""Model for NY Fed Data"""
+"""Model for NY Fed Primary Dealer Statistics"""
 #%%
 from typing import Optional
 import numpy as np
 import pandas as pd
-from rest_api import RestAPI
+from ny_fed.rest_api import RestAPI
 
 __docstyle__ = "numpy"
 

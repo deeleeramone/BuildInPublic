@@ -1,7 +1,6 @@
 """Model for NY Fed Primary Dealer Statistics"""
-#%%
+# %%
 from typing import Optional
-import numpy as np
 import pandas as pd
 from ny_fed.rest_api import RestAPI
 
@@ -19,11 +18,9 @@ PDS_DESCRIPTIONS = (
 )
 
 all_pds_data = (
-    fed_api.pds.all_timeseries()
-    .set_index("As Of Date")
-    .replace("*", "0")
-    .sort_index()
+    fed_api.pds.all_timeseries().set_index("As Of Date").replace("*", "0").sort_index()
 )
+
 
 def search_pds_descriptions(description: str = "") -> pd.DataFrame:
     """Search for Primary Dealer Statistics descriptions. Results are case sensitive.
@@ -46,6 +43,40 @@ def search_pds_descriptions(description: str = "") -> pd.DataFrame:
 
     results = PDS_DESCRIPTIONS.filter(like=description, axis=0)
     return results
+
+
+def get_pds_series(series_id: str) -> pd.Series:
+    """Return any valid series ID from the Primary Dealer Statistics Time Series Data
+
+    Parameters
+    ----------
+    series_id: str
+        The series ID to get. Use search_pds_descriptions() to identify valid series IDs.
+
+    Returns
+    -------
+    pd.Series: Pandas Series with the data.
+
+    Examples
+    --------
+    >>> data = get_pds_series(series_id = "PDFTD-CS")
+
+    >>> data = get_pds_series(series_id = "PDSORA-UTSET")
+    """
+
+    if series_id not in list(all_pds_data["Time Series"]):
+        print(
+            "No series found for, ",
+            series_id,
+            ". use search_pds_descriptions() to identify valid series IDs",
+            sep="",
+        )
+        return
+
+    data = all_pds_data.query("`Time Series` == @series_id")["Value (millions)"].astype(
+        float
+    )
+    return data.rename(series_id)
 
 
 def get_fails(
@@ -161,24 +192,24 @@ def get_fails(
     ]
 
     data = pd.DataFrame()
-    data["FTDs - Corporate Securities"] = all_pds_data.query("`Time Series` == 'PDFTD-CS'")[
-        "Value (millions)"
-    ].astype(float)
-    data["FTRs - Corporate Securities"] = all_pds_data.query("`Time Series` == 'PDFTR-CS'")[
-        "Value (millions)"
-    ].astype(float)
+    data["FTDs - Corporate Securities"] = all_pds_data.query(
+        "`Time Series` == 'PDFTD-CS'"
+    )["Value (millions)"].astype(float)
+    data["FTRs - Corporate Securities"] = all_pds_data.query(
+        "`Time Series` == 'PDFTR-CS'"
+    )["Value (millions)"].astype(float)
     data["FTDs - Agency and GSE Securities (Ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTD-FGEM'"
     )["Value (millions)"].astype(float)
     data["FTRs - Agency and GSE Securities (Ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDFTR-FGEM'"
     )["Value (millions)"].astype(float)
-    data["FTDs - Agency and GSE MBS"] = all_pds_data.query("`Time Series` == 'PDFTD-FGM'")[
-        "Value (millions)"
-    ].astype(float)
-    data["FTRs - Agency and GSE MBS"] = all_pds_data.query("`Time Series` == 'PDFTR-FGM'")[
-        "Value (millions)"
-    ].astype(float)
+    data["FTDs - Agency and GSE MBS"] = all_pds_data.query(
+        "`Time Series` == 'PDFTD-FGM'"
+    )["Value (millions)"].astype(float)
+    data["FTRs - Agency and GSE MBS"] = all_pds_data.query(
+        "`Time Series` == 'PDFTR-FGM'"
+    )["Value (millions)"].astype(float)
     data["FTDs - Other MBS"] = all_pds_data.query("`Time Series` == 'PDFTD-OM'")[
         "Value (millions)"
     ].astype(float)
@@ -278,13 +309,15 @@ def get_fails(
         return data.iloc[:, 8:12]
 
     return data
-#%%
+
+
+# %%
 def get_mbs_fails_and_transactions(
     mbs_class: Optional[str] = "A",
     umbs: Optional[bool] = True,
     data_type: Optional[str] = "",
     total: Optional[bool] = False,
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     """Gets a time series of MBS Settlement Fails and Transactions by yield and class.
 
     Data are updated on a monthly basis.  All figures are in millions of USD.  The Series IDs used in this function are:
@@ -319,7 +352,7 @@ def get_mbs_fails_and_transactions(
     Examples
     --------
     >>> mbs_ftd = get_mbs_fails_and_transactions(data_type = "FTD")
-    
+
     >>> mbs_ftr = get_mbs_fails_and_transactions(data_type = "FTR")
 
     >>> mbs_total = get_mbs_fails_and_transactions(total = True)
@@ -330,7 +363,7 @@ def get_mbs_fails_and_transactions(
     """
 
     data = pd.DataFrame()
-    DATA_TYPES = {"FTR":"FR", "FTD":"FD", "Outright":"OUT", "Dollar Roll": "DR"}
+    DATA_TYPES = {"FTR": "FR", "FTD": "FD", "Outright": "OUT", "Dollar Roll": "DR"}
     MBS_CLASSES = ["A", "B", "C"]
 
     if mbs_class.upper() not in MBS_CLASSES:
@@ -349,35 +382,51 @@ def get_mbs_fails_and_transactions(
 
     if mbs_class.upper() == "A":
         if total:
-            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FRT'")[
+            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query(
+                "`Time Series` == 'PDCAFNMAFHLMC-FRT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO DELIVER"] = all_pds_data.query(
+                "`Time Series` == 'PDCAFNMAFHLMC-FDT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query(
+                "`Time Series` == 'PDCAFHLMCNONUMBS-FRT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO DELIVER"] = all_pds_data.query(
+                "`Time Series` == 'PDCAFHLMCNONUMBS-FDT'"
+            )["Value (millions)"].astype(float)
+            data[
+                "FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (OUTRIGHTS)"
+            ] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-OUTT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 30 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-FDT'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (OUTRIGHTS)"
+            ] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-OUTT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FRT'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (DOLLAR ROLL)"
+            ] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-DRT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 30 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-FDT'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (DOLLAR ROLL)"
+            ] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-DRT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-OUTT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-OUTT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 30 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCAFNMAFHLMC-DRT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 30 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCAFHLMCNONUMBS-DRT'")[
-                "Value (millions)"
-            ].astype(float)
+            ].astype(
+                float
+            )
 
             return data
 
         seriesid = "PDCAFNMAFHLMC" if umbs else "PDCAFHLMCNONUMBS"
-        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+        series_id = f"{seriesid}" "-" f"{DATA_TYPES[data_type]}"
 
         data["<2.5%"] = all_pds_data.query("`Time Series` == @series_id+'L25'")[
             "Value (millions)"
@@ -413,35 +462,50 @@ def get_mbs_fails_and_transactions(
         return data
 
     if mbs_class.upper() == "B":
-
         seriesid = "PDCBFNMAFHLMC" if umbs else "PDCBFHLMCNONUMBS"
-        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+        series_id = f"{seriesid}" "-" f"{DATA_TYPES[data_type]}"
 
         if total:
-            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-FRT'")[
+            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query(
+                "`Time Series` == 'PDCBFNMAFHLMC-FRT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO DELIVER"] = all_pds_data.query(
+                "`Time Series` == 'PDCBFNMAFHLMC-FDT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query(
+                "`Time Series` == 'PDCBFHLMCNONUMBS-FRT'"
+            )["Value (millions)"].astype(float)
+            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO DELIVER"] = all_pds_data.query(
+                "`Time Series` == 'PDCBFHLMCNONUMBS-FRD'"
+            )["Value (millions)"].astype(float)
+            data[
+                "FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (OUTRIGHTS)"
+            ] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-OUTT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 15 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-FDT'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (OUTRIGHTS)"
+            ] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-OUTT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-FRT'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (DOLLAR ROLL)"
+            ] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-DRT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 15 YEAR FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-FRD'")[
+            ].astype(
+                float
+            )
+            data[
+                "FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (DOLLAR ROLL)"
+            ] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-DRT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-OUTT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (OUTRIGHTS)"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-OUTT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC UMBS 15 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCBFNMAFHLMC-DRT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["FNMA/FHLMC (NON-UMBS) 15 YEAR TRANSACTIONS (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCBFHLMCNONUMBS-DRT'")[
-                "Value (millions)"
-            ].astype(float)
+            ].astype(
+                float
+            )
 
             return data
 
@@ -479,23 +543,30 @@ def get_mbs_fails_and_transactions(
         return data
 
     if mbs_class.upper() == "C":
-
         seriesid = "PDCCGNMA"
-        series_id = f"{seriesid}""-"f"{DATA_TYPES[data_type]}"
+        series_id = f"{seriesid}" "-" f"{DATA_TYPES[data_type]}"
 
         if total:
-            data["Class C 30 YEAR GNMA FAILS TO RECEIVE"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-FRT'")[
+            data["Class C 30 YEAR GNMA FAILS TO RECEIVE"] = all_pds_data.query(
+                "`Time Series` == 'PDCCGNMA-FRT'"
+            )["Value (millions)"].astype(float)
+            data["Class C 30 YEAR GNMA FAILS TO DELIVER"] = all_pds_data.query(
+                "`Time Series` == 'PDCCGNMA-FDT'"
+            )["Value (millions)"].astype(float)
+            data[
+                "Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (OUTRIGHT)"
+            ] = all_pds_data.query("`Time Series` == 'PDCCGNMA-OUTT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["Class C 30 YEAR GNMA FAILS TO DELIVER"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-FDT'")[
+            ].astype(
+                float
+            )
+            data[
+                "Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (DOLLAR ROLL)"
+            ] = all_pds_data.query("`Time Series` == 'PDCCGNMA-DRT'")[
                 "Value (millions)"
-            ].astype(float)
-            data["Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (OUTRIGHT)"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-OUTT'")[
-                "Value (millions)"
-            ].astype(float)
-            data["Class C 30 YEAR GNMA TRANSACTIONS VOLUMES (DOLLAR ROLL)"] = all_pds_data.query("`Time Series` == 'PDCCGNMA-DRT'")[
-                "Value (millions)"
-            ].astype(float)
+            ].astype(
+                float
+            )
 
             return data
 
@@ -532,7 +603,8 @@ def get_mbs_fails_and_transactions(
 
         return data
 
-#%%
+
+# %%
 def get_dealer_position_abs() -> pd.DataFrame:
     """Gets a time series of Primary Dealer Positions, for Asset Backed Securities, by Type.
 
@@ -677,6 +749,7 @@ def get_dealer_position_tbills() -> pd.DataFrame:
 
     return data
 
+
 def get_dealer_position_coupons() -> pd.DataFrame:
     """
     Gets a time series of Primary Dealer Positions, for US Treasury Seucirities Coupons (ex-TIPS), by duration.
@@ -719,47 +792,33 @@ def get_dealer_position_coupons() -> pd.DataFrame:
 
     dealer_position_coupons = pd.DataFrame()
 
-    two_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-L2'")[
+    two_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-L2'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    three_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G2L3'")[
+    three_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-G2L3'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    six_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G3L6'")[
+    six_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-G3L6'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    seven_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G6L7'")[
+    seven_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-G6L7'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    eleven_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G7L11'")[
+    eleven_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-G7L11'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    twenty_one_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G11L21'")[
+    twenty_one_years = all_pds_data.query("`Time Series` == 'PDPOSGSC-G11L21'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    greater_than_21 = (
-        all_pds_data.query("`Time Series` == 'PDPOSGSC-G21'")[
+    greater_than_21 = all_pds_data.query("`Time Series` == 'PDPOSGSC-G21'")[
         "Value (millions)"
     ].astype(float)
-    )
 
     dealer_position_coupons = pd.concat(
         [
@@ -806,9 +865,9 @@ def get_dealer_position_frn() -> pd.DataFrame:
     """
 
     data = pd.DataFrame()
-    data['Floating Rate Notes'] = all_pds_data.query(
-        "`Time Series` == 'PDPOSGS-BFRN'"
-    )["Value (millions)"].astype(float)
+    data["Floating Rate Notes"] = all_pds_data.query("`Time Series` == 'PDPOSGS-BFRN'")[
+        "Value (millions)"
+    ].astype(float)
 
     return data
 
@@ -829,7 +888,7 @@ def get_dealer_position_discount_notes() -> pd.Series:
     >>> dealer_position_discount_notes = get_dealer_position_discount_notes()
     """
     data = pd.DataFrame()
-    data['Federal Agency Discount Notes (ex-MBS)'] = all_pds_data.query(
+    data["Federal Agency Discount Notes (ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDPOSFGS-DN'"
     )["Value (millions)"].astype(float)
 
@@ -853,7 +912,7 @@ def get_dealer_position_agency_coupons() -> pd.Series:
     """
 
     data = pd.DataFrame()
-    data['Federal Agency Coupons (ex-MBS)'] = all_pds_data.query(
+    data["Federal Agency Coupons (ex-MBS)"] = all_pds_data.query(
         "`Time Series` == 'PDPOSFGS-C'"
     )["Value (millions)"].astype(float)
 
@@ -898,41 +957,29 @@ def get_dealer_position_mbs() -> pd.DataFrame:
         "Agency and GSE MBS Residential - Specified Pools",
     ]
 
-    agency_residential_outrights = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-TBA'")[
-        "Value (millions)"
-    ].astype(float)
-    )
+    agency_residential_outrights = all_pds_data.query(
+        "`Time Series` == 'PDPOSMBSFGS-TBA'"
+    )["Value (millions)"].astype(float)
 
-    agency_residential_pools = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-ST'")[
+    agency_residential_pools = all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-ST'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    agency_residential_other = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-OR'")[
+    agency_residential_other = all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-OR'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    non_agency_residential = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSNA-R'")[
+    non_agency_residential = all_pds_data.query("`Time Series` == 'PDPOSMBSNA-R'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    agency_cmbs = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-C'")[
+    agency_cmbs = all_pds_data.query("`Time Series` == 'PDPOSMBSFGS-C'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    non_agency_cmbs = (
-        all_pds_data.query("`Time Series` == 'PDPOSMBSNA-O'")[
+    non_agency_cmbs = all_pds_data.query("`Time Series` == 'PDPOSMBSNA-O'")[
         "Value (millions)"
     ].astype(float)
-    )
 
     dealer_position_mbs = pd.concat(
         [
@@ -980,9 +1027,9 @@ def get_dealer_position_commercial_paper() -> pd.Series:
     """
 
     data = pd.DataFrame()
-    data['Commercial Paper'] = all_pds_data.query(
-        "`Time Series` == 'PDPOSCSCP'"
-    )["Value (millions)"].astype(float)
+    data["Commercial Paper"] = all_pds_data.query("`Time Series` == 'PDPOSCSCP'")[
+        "Value (millions)"
+    ].astype(float)
 
     return data
 
@@ -1019,29 +1066,21 @@ def get_dealer_position_investment_grade() -> pd.DataFrame:
         "> 10 Years",
     ]
 
-    thirteen_months = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-L13'")[
+    thirteen_months = all_pds_data.query("`Time Series` == 'PDPOSCSBND-L13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    five_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G13'")[
+    five_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-G13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G5L10'")[
+    ten_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-G5L10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    greater_than_ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-G10'")[
+    greater_than_ten_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-G10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
     dealer_position_investment_grade = pd.concat(
         [thirteen_months, five_years, ten_years, greater_than_ten_years], axis=1
@@ -1088,29 +1127,21 @@ def get_dealer_position_junk_grade() -> pd.DataFrame:
         "> 10 Years",
     ]
 
-    thirteen_months = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELL13'")[
+    thirteen_months = all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELL13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    five_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG13'")[
+    five_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG5L10'")[
+    ten_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG5L10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    greater_than_ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG10'")[
+    greater_than_ten_years = all_pds_data.query("`Time Series` == 'PDPOSCSBND-BELG10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
     dealer_position_junk_grade = pd.concat(
         [thirteen_months, five_years, ten_years, greater_than_ten_years], axis=1
@@ -1157,29 +1188,21 @@ def get_dealer_position_state_municipal() -> pd.DataFrame:
         "> 10 Years",
     ]
 
-    thirteen_months = (
-        all_pds_data.query("`Time Series` == 'PDPOSSMGO-L13'")[
+    thirteen_months = all_pds_data.query("`Time Series` == 'PDPOSSMGO-L13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    five_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G13'")[
+    five_years = all_pds_data.query("`Time Series` == 'PDPOSSMGO-G13'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G5L10'")[
+    ten_years = all_pds_data.query("`Time Series` == 'PDPOSSMGO-G5L10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
-    greater_than_ten_years = (
-        all_pds_data.query("`Time Series` == 'PDPOSSMGO-G10'")[
+    greater_than_ten_years = all_pds_data.query("`Time Series` == 'PDPOSSMGO-G10'")[
         "Value (millions)"
     ].astype(float)
-    )
 
     dealer_position_state_municipal = pd.concat(
         [thirteen_months, five_years, ten_years, greater_than_ten_years], axis=1
@@ -1195,3 +1218,253 @@ def get_dealer_position_state_municipal() -> pd.DataFrame:
     )
 
     return dealer_position_state_municipal
+
+
+def get_dealer_financing(
+    securities_in: Optional[bool] = False,
+    asset_type: Optional[str] = "US Treasury ex-TIPS",
+    participant: Optional[str] = "tri-party",
+) -> pd.DataFrame:
+    """Gets a time series of securities financing by asset type for either repo or reverse repo transactions.
+    All values returned are in millions of US dollars.
+    Data are updated on Thursdays at approximately 4:15 p.m. with the previous week's statistics.
+    For more details on each series, see the NY Federal Reserve website: https://www.newyorkfed.org/markets/counterparties/primary-dealers-statistics
+
+    Parameters
+    ---------
+    securities_in : Optional[bool] = False
+        When true, the data is for reverse repurchase agreements (in).  When false, the data is for repurchase agreements (out).
+    asset_type : Optional[str] = "US Treasury ex-TIPS"
+        The type of asset to return. Choices are:
+        ["TIPS", "US Treasury ex-TIPS", "Residential MBS", "Agency ex-MBS", "CMBS", "Corporate Debt", "ABS", "Equities", "Other"]
+    participant: Optional[str] = "tri-party"
+        The type of market participant. Choices are:
+        ["uncleared", "cleared", "tri-party", "other"]
+
+    Returns
+    -------
+    pd.DataFrame: Pandas DataFrame of securities financing by asset type for either repo or reverse repo transactions.
+
+    Examples
+    --------
+    The default state for the function will return tri-party lending data for repurchase agreements of US Treasury securities ex-TIPS.
+
+    Please note that because of variations in the data, this function returns only the currently published formats.
+
+    >>> df = get_dealer_financing()
+
+    To return the reverse repurchase agreements for the same asset type and participant, set the `securities_in` parameter to True.
+
+    >>> df = get_dealer_financing(securities_in=True)
+    """
+
+    direction = "IN" if securities_in else "OUT"
+
+    SERIES_TYPES = {
+        "TIPS": "UTST",
+        "US Treasury ex-TIPS": "UTSET",
+        "Residential MBS": "FGM",
+        "Agency ex-MBS": "FGEM",
+        "CMBS": "FGCM",
+        "Corporate Debt": "CD",
+        "ABS": "ABS",
+        "Equities": "E",
+        "Other": "O",
+    }
+
+    participants = {
+        "uncleared": "UNCLEARED",
+        "cleared": "CLEARED",
+        "tri-party": "GCF_TRI_PARTY",
+        "other": "OTHER",
+    }
+
+    if asset_type not in SERIES_TYPES.keys():
+        print(
+            "Invalid choice. The asset type must be one of: ", list(SERIES_TYPES.keys())
+        )
+        return
+
+    if participant not in participants.keys():
+        print("Invalid choice. Choose one of: ", list(participants.keys()))
+        return
+
+    SERIES_TYPES = {
+        "IN_UNCLEARED": {
+            "PDSIRRA-UBS"
+            + SERIES_TYPES[asset_type]: "SPECIFIED Overnight & Continuing",
+            "PDSIRRA-UBS"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPECIFIED Term Agreement (<30 days)",
+            "PDSIRRA-UBS"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPECIFIED Term Agreement (>=30 days)",
+            "PDSIRRA-UBG" + SERIES_TYPES[asset_type]: "GENERAL Overnight & Continuing",
+            "PDSIRRA-UBG"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GENERAL Term Agreement (<30 days)",
+            "PDSIRRA-UBG"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GENERAL Term Agreement (>=30 days)",
+        },
+        "IN_CLEARED": {
+            "PDSIRRA-CBS"
+            + SERIES_TYPES[asset_type]: "SPECIFIED Overnight & Continuing",
+            "PDSIRRA-CBS"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPECIFIED Term Agreement (<30 days)",
+            "PDSIRRA-CBS"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPECIFIED Term Agreement (>=30 days)",
+            "PDSIRRA-CBG" + SERIES_TYPES[asset_type]: "GENERAL Overnight & Continuing",
+            "PDSIRRA-CBG"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GENERAL Term Agreement (<30 days)",
+            "PDSIRRA-CBG"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GENERAL Term Agreement (>=30 days)",
+            "PDSIRRA-CBSP"
+            + SERIES_TYPES[asset_type]: "SPONSORED Overnight & Continuing",
+            "PDSIRRA-CBSP"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPONSORED Term Agreement (<30 days)",
+            "PDSIRRA-CBSP"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPONSORED Term Agreement (>=30 days)",
+        },
+        "IN_GCF_TRI_PARTY": {
+            "PDSIRRA-GCF" + SERIES_TYPES[asset_type]: "GCF Overnight & Continuing",
+            "PDSIRRA-GCF"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GCF Term Agreement (<30 days)",
+            "PDSIRRA-GCF"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GCF Term Agreement (>=30 days)",
+            "PDSIRRA-TRI"
+            + SERIES_TYPES[
+                asset_type
+            ]: "TRI-PARTY EXCLUDING GCF Overnight & Continuing",
+            "PDSIRRA-TRI"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "TRI-PARTY EXCLUDING GCF Term Agreement (<30 days)",
+            "PDSIRRA-TRI"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "TRI-PARTY EXCLUDING GCF Term Agreement (>=30 days)",
+        },
+        "IN_OTHER": {
+            "PDSIOSB-" + SERIES_TYPES[asset_type]: "Overnight & Continuing",
+            "PDSIOSB-"
+            + SERIES_TYPES[asset_type]
+            + "TA30": "Term Agreements (< 30 days)",
+            "PDSIOSB-"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "Term Agreements (>= 30 days)",
+        },
+        "OUT_UNCLEARED": {
+            "PDSORA-UBS" + SERIES_TYPES[asset_type]: "SPECIFIED Overnight & Continuing",
+            "PDSORA-UBS"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPECIFIED Term Agreement (<30 days)",
+            "PDSORA-UBS"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPECIFIED Term Agreement (>=30 days)",
+            "PDSORA-UBG" + SERIES_TYPES[asset_type]: "GENERAL Overnight & Continuing",
+            "PDSORA-UBG"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GENERAL Term Agreement (<30 days)",
+            "PDSORA-UBG"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GENERAL Term Agreement (>=30 days)",
+        },
+        "OUT_CLEARED": {
+            "PDSORA-CBS" + SERIES_TYPES[asset_type]: "SPECIFIED Overnight & Continuing",
+            "PDSORA-CBS"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPECIFIED Term Agreement (<30 days)",
+            "PDSORA-CBS"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPECIFIED Term Agreement (>=30 days)",
+            "PDSORA-CBG" + SERIES_TYPES[asset_type]: "GENERAL Overnight & Continuing",
+            "PDSORA-CBG"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GENERAL Term Agreement (<30 days)",
+            "PDSORA-CBG"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GENERAL Term Agreement (>=30 days)",
+            "PDSORA-CBSP"
+            + SERIES_TYPES[asset_type]: "SPONSORED Overnight & Continuing",
+            "PDSORA-CBSP"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "SPONSORED Term Agreement (<30 days)",
+            "PDSORA-CBSP"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "SPONSORED Term Agreement (>=30 days)",
+        },
+        "OUT_GCF_TRI_PARTY": {
+            "PDSORA-GCF" + SERIES_TYPES[asset_type]: "GCF Overnight & Continuing",
+            "PDSORA-GCF"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "GCF Term Agreement (<30 days)",
+            "PDSORA-GCF"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "GCF Term Agreement (>=30 days)",
+            "PDSORA-TRI"
+            + SERIES_TYPES[
+                asset_type
+            ]: "TRI-PARTY EXCLUDING GCF Overnight & Continuing",
+            "PDSORA-TRI"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "TRI-PARTY EXCLUDING GCF Term Agreement (<30 days)",
+            "PDSORA-TRI"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "TRI-PARTY EXCLUDING GCF Term Agreement (>=30 days)",
+        },
+        "OUT_OTHER": {
+            "PDSOOS-" + SERIES_TYPES[asset_type]: "Overnight and Continuing",
+            "PDSOOS-"
+            + SERIES_TYPES[asset_type]
+            + "TAL30": "Term Agreements (< 30 days)",
+            "PDSOOS-"
+            + SERIES_TYPES[asset_type]
+            + "TAG30": "Term Agreements (>= 30 days)",
+        },
+    }
+    series_types = direction + "_" + participants[participant]
+    series_ids = list(SERIES_TYPES[series_types].keys())
+    series_columns = list(SERIES_TYPES[series_types].values())
+
+    financing = pd.DataFrame()
+    for series in series_ids:
+        financing[series] = all_pds_data.query("`Time Series` == @series")[
+            "Value (millions)"
+        ].astype(float)
+    financing.columns = series_columns
+    return financing
+
+
+class Fails:
+    """Class for Fails to Deliver and Receive."""
+
+    def __init__(self):
+        self.all_fails = get_fails
+        self.mbs_fails = get_mbs_fails_and_transactions
+        return
+
+
+class DealerPositioning:
+    """Class for Dealer Positioning."""
+
+    def __init__(self):
+        self.abs = get_dealer_position_abs
+        self.agency_coupons = get_dealer_position_agency_coupons
+        self.commercial_paper = get_dealer_position_commercial_paper
+        self.discount_notes = get_dealer_position_discount_notes
+        self.frn = get_dealer_position_frn
+        self.investment_grade = get_dealer_position_investment_grade
+        self.junk_grade = get_dealer_position_junk_grade
+        self.mbs = get_dealer_position_mbs
+        self.muni = get_dealer_position_state_municipal
+        self.tbills = get_dealer_position_tbills
+        self.tips = get_dealer_position_tips
+
+        return

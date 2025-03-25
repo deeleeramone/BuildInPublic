@@ -17,3 +17,5 @@ Install this in an environment with a version of Python between 3.9-3.12, inclus
 - Click on the "Factors" template.
 
 - Enjoy your burrito.
+
+<img width="1783" alt="Screenshot 2025-03-25 at 2 39 06 PM" src="https://github.com/user-attachments/assets/e5e5a454-3123-4644-9820-4d039a0661a3" />

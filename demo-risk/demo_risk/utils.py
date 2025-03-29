@@ -4,6 +4,7 @@ from functools import lru_cache
 import zipfile
 from openbb_core.provider.utils.helpers import get_requests_session
 from demo_risk.constants import (
+    BASE_URL,
     COUNTRY_PORTFOLIO_FILES,
     COUNTRY_PORTFOLIOS_URLS,
     URL_MAP,
@@ -127,7 +128,7 @@ D/P : Dividend Yield
 The dividend yield used to form portfolios in June of year t is the total dividends paid from July of t-1 to June of t per dollar of equity in June of t. The dividend yield is computed using the with and without dividend returns from CRSP, as described in Fama and French, 1988, “Dividend yields and expected stock returns,” Journal of Financial Economics 25.
 """
 
-InternationalPortofliosDoc = """
+InternationalPortfoliosDoc = """
 
 Countries
 ---------
@@ -195,13 +196,42 @@ We weight countries in the index portfolios in proportion to their EAFE + Canada
 """
 
 
+async def perform_ols(data, y: str, factors: list, **kwargs):
+    """Perform Ordinary Least Squares regression."""
+    import statsmodels.api as sm
+    from pandas import DataFrame
+
+    data = DataFrame(data)
+
+    if "Date" in data.columns:
+        data = data.set_index("Date")
+
+    X = sm.add_constant(data[factors])
+
+    Y = data[y]
+
+    model = sm.OLS(Y, X).fit()
+
+    factors = model.params.index
+    df = DataFrame(index=factors)
+    df.loc[:, "coefficient"] = model.params.values
+    confidence_intervals = model.conf_int().rename(
+        columns={0: "lower_ci", 1: "upper_ci"}
+    )
+    pvalues = model.pvalues
+    df.loc[:, "p_value"] = pvalues
+    df = df.join(confidence_intervals)
+
+    return df
+
+
 @lru_cache
 def download_file(dataset):
     if dataset not in list(URL_MAP):
         raise ValueError(
             f"Dataset {dataset} not found in available datasets: {list(URL_MAP)}"
         )
-    url = URL_MAP[dataset]
+    url = BASE_URL + URL_MAP[dataset]
     with get_requests_session() as session:
         response = session.get(url)
         response.raise_for_status()
@@ -523,14 +553,17 @@ def get_international_portfolio_data(
             raise ValueError(
                 f"Index {index} not found in available indexes: {INTERNATIONAL_INDEX_PORTFOLIO_FILES}"
             )
-        url = INTERNATIONAL_INDEX_PORTFOLIOS_URLS["dividends" if dividends else "ex"]
+        url = (
+            BASE_URL
+            + INTERNATIONAL_INDEX_PORTFOLIOS_URLS["dividends" if dividends else "ex"]
+        )
         index = INTERNATIONAL_INDEX_PORTFOLIO_FILES[index]
     if country:
         if country not in list(COUNTRY_PORTFOLIO_FILES):
             raise ValueError(
                 f"Country {country} not found in available countries: {COUNTRY_PORTFOLIO_FILES}"
             )
-        url = COUNTRY_PORTFOLIOS_URLS["dividends" if dividends else "ex"]
+        url = BASE_URL + COUNTRY_PORTFOLIOS_URLS["dividends" if dividends else "ex"]
         index = COUNTRY_PORTFOLIO_FILES[country]
 
     response = download_international_portfolios(url)
@@ -708,6 +741,10 @@ def get_portfolio_data(
     dataset: str, frequency: str = None, measure: str = None
 ) -> tuple:
     """Get the portfolio data for a given dataset."""
+    from demo_risk.depends import get_store
+
+    store = get_store()
+
     if frequency and frequency.lower() not in ["monthly", "annual", "daily"]:
         raise ValueError(
             f"Frequency {frequency} not supported. Choose from 'monthly', 'annual', or 'daily'."
@@ -723,9 +760,19 @@ def get_portfolio_data(
     if "Factor" in dataset:
         measure = None
 
-    file = download_file(dataset)
-    table, desc = read_csv_file(file)
-    dfs, metadata = process_csv_tables(table, desc)
+    if dataset in store.list_stores:
+        stored = store.get_store(dataset)
+        dfs = stored["data"]
+        metadata = stored["metadata"]
+    else:
+        file = download_file(dataset)
+        table, desc = read_csv_file(file)
+        dfs, metadata = process_csv_tables(table, desc)
+
+        store.add_store(
+            dataset,
+            {"dataset": dataset, "data": dfs, "metadata": metadata},
+        )
 
     if frequency:
         out_dfs = [

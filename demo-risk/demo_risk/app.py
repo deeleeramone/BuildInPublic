@@ -427,7 +427,7 @@ class PortfolioFactors(Data):
                     "hoverCardData": {
                         "cellField": "value",
                         "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{description}\n- {additionalInfo}",
+                        "markdown": "{P-Value}\n- {ConfidenceBands}",
                     }
                 },
             }
@@ -648,7 +648,7 @@ async def get_templates():
                 },
                 "portfolio-factor-correlations": {
                     "id": "portfolio-factor-correlations",
-                    "name": "Portfolio Factor Correlations",
+                    "name": "Portfolio Factor Attributions",
                     "layout": [
                         {
                             "i": "portfolio_factors_custom_obb",
@@ -1176,7 +1176,7 @@ async def get_factor_choices(
     "/portfolio_factors",
     openapi_extra={
         "widget_config": {
-            "name": "Portfolio Factor Correlations",
+            "name": "Portfolio Factor Attributions",
             "data": {
                 "table": {
                     "showAll": False,

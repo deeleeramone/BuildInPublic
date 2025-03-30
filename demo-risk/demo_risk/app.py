@@ -1,17 +1,18 @@
 """Main application."""
 
 import asyncio
+import json
 
 from typing import Annotated, Literal, Optional
 
 from fastapi import FastAPI, Query
 from openbb_core.provider.abstract.data import Data
 from pandas import DataFrame, DateOffset, Timestamp
-from pydantic import Field, model_validator, model_serializer
+from pydantic import Field
 
 from demo_risk.constants import DATASET_CHOICES, FACTOR_REGION_MAP, REGIONS_MAP
 from demo_risk.depends import PortfolioData
-from demo_risk.correlation_matrix import correlation_matrix
+from demo_risk.correlation_matrix import correlation_matrix, plot_factors
 from demo_risk.utils import (
     FactorsDoc,
     get_portfolio_data,
@@ -50,39 +51,6 @@ class PriceHistory(Data):
     )
 
 
-class OLSData(Data):
-    """OLS Data."""
-
-    period: str = Field(
-        None,
-        description="The time period represented by the statistics.",
-    )
-    factor: str = Field(None, description="The factor in the factors dataset.")
-    coefficient: Optional[float] = Field(
-        None,
-        description="The coefficient of the factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none"}},
-    )
-    p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the factor in the OLS model.",
-        title="P-Value",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none"}},
-    )
-    lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the factor in the OLS model.",
-        title="Lower CI",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none"}},
-    )
-    upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the factor in the OLS model.",
-        title="Upper CI",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none"}},
-    )
-
-
 class HoldingsData(Data):
     """Portfolio Holdings Data."""
 
@@ -109,367 +77,6 @@ class HoldingsData(Data):
         json_schema_extra={"x-unit_measurement": "percent"},
         alias="Weight",
     )
-
-
-class PortfolioFactors(Data):
-    """Portfolio Factors Data."""
-
-    period: str = Field(
-        None,
-        description="The time period represented by the statistics.",
-    )
-    const_coeff: dict = Field(
-        None,
-        description="The constant coefficient in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "Constant",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    const_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the constant coefficient in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    const_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the constant coefficient in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    const_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the constant coefficient in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    mkt_rf_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the market factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "Mkt-RF",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    mkt_rf_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the market factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    mkt_rf_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the market factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    smb_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the SMB factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "SMB",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    smb_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the SMB factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    smb_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the SMB factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    smb_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the SMB factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    hml_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the HML factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "HML",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    hml_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the HML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    hml_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the HML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    hml_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the HML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    rmw_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the RMW factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "RMW",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    rmw_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the RMW factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "formatterFn": "none",
-                "hide": True,
-            }
-        },
-    )
-    rmw_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the RMW factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    rmw_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the RMW factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    cma_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the CMA factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "CMA",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    cma_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the CMA factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    cma_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the CMA factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    cma_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the CMA factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    mom_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the momentum factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "Mom",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    mom_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the momentum factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    mom_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the momentum factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    mom_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the momentum factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    wml_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the WML factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "WML",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    wml_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the WML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    wml_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the WML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    wml_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the WML factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    st_rev_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the short-term reversal factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "ST Reversal",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    st_rev_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the short-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    st_rev_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the short-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    st_rev_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the short-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    lt_rev_coeff: Optional[dict] = Field(
-        None,
-        description="The coefficient of the long-term reversal factor in the OLS model.",
-        json_schema_extra={
-            "x-widget_config": {
-                "headerName": "LT Reversal",
-                "formatterFn": "none",
-                "renderFn": "hoverCard",
-                "renderFnParams": {
-                    "hoverCardData": {
-                        "cellField": "value",
-                        "title": "P-Values and Confidence Intervals.",
-                        "markdown": "{P-Value}\n- {ConfidenceBands}",
-                    }
-                },
-            }
-        },
-    )
-    lt_rev_p_value: Optional[float] = Field(
-        None,
-        description="The p-value of the long-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    lt_rev_lower_ci: Optional[float] = Field(
-        None,
-        description="The lower confidence interval of the long-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-    lt_rev_upper_ci: Optional[float] = Field(
-        None,
-        description="The upper confidence interval of the long-term reversal factor in the OLS model.",
-        json_schema_extra={"x-widget_config": {"formatterFn": "none", "hide": True}},
-    )
-
-    @model_validator(mode="before")
-    def model_validate(cls, values):
-        """Validate the model."""
-        output = {}
-        for k, v in values.items():
-            if not v:
-                continue
-            output[k] = v
-
-        return output
-
-    @model_serializer()
-    def model_serialize(self, return_type=dict):
-        """Serialize the model."""
-        output = {}
-        for k in self.model_fields:
-            if not getattr(self, k, None):
-                continue
-            output[k] = getattr(self, k)
-
-        return output
 
 
 @app.get("/templates.json", openapi_extra={"widget_config": {"exclude": True}})
@@ -508,15 +115,6 @@ async def get_templates():
                                     "end_date": "2025-03-27",
                                 },
                                 "chartView": {"enabled": False, "chartType": "line"},
-                                "columnState": {
-                                    "default_undefined": {
-                                        "focusedCell": {
-                                            "colId": "Mkt-RF",
-                                            "rowIndex": 0,
-                                            "rowPinned": None,
-                                        }
-                                    }
-                                },
                             },
                         },
                         {
@@ -655,36 +253,8 @@ async def get_templates():
                             "x": 0,
                             "y": 2,
                             "w": 30,
-                            "h": 9,
-                            "state": {
-                                "chartView": {"enabled": False, "chartType": "line"},
-                                "columnState": {
-                                    "default_undefined": {
-                                        "columnVisibility": {
-                                            "hiddenColIds": [
-                                                "const_p_value",
-                                                "const_lower_ci",
-                                                "const_upper_ci",
-                                                "mkt_rf_p_value",
-                                                "mkt_rf_lower_ci",
-                                                "mkt_rf_upper_ci",
-                                                "smb_p_value",
-                                                "smb_lower_ci",
-                                                "smb_upper_ci",
-                                                "hml_p_value",
-                                                "hml_lower_ci",
-                                                "hml_upper_ci",
-                                                "rmw_p_value",
-                                                "rmw_lower_ci",
-                                                "rmw_upper_ci",
-                                                "cma_p_value",
-                                                "cma_lower_ci",
-                                                "cma_upper_ci",
-                                            ]
-                                        }
-                                    }
-                                },
-                            },
+                            "h": 20,
+                            "state": {"params": {"portfolio": "Client 2"}},
                         }
                     ],
                 },
@@ -934,6 +504,7 @@ async def get_load_portfolios(
     },
 )
 async def get_load_factors(
+    store: PortfolioData,
     region: Annotated[
         str,
         Query(
@@ -1029,6 +600,10 @@ async def get_load_factors(
         df = df.astype(float)
         df = df.sort_index()
         DATASETS["loaded_factors"] = {"meta": meta[0], "data": df}
+        if "loaded_factors" not in store.list_stores:
+            store.add_store("loaded_factors", df)
+        elif "loaded_factors" in store.list_stores:
+            store.update_store("loaded_factors", df)
 
         return df.reset_index().to_dict(orient="records")
     except Exception:
@@ -1036,23 +611,301 @@ async def get_load_factors(
 
 
 @app.get("/get_data_choices", openapi_extra={"widget_config": {"exclude": True}})
-async def get_data_choices():
-    await asyncio.sleep(2)
-    output = [
-        {"label": "Client 1", "value": "Client 1"},
-        {"label": "Client 2", "value": "Client 2"},
-        {"label": "Client 3", "value": "Client 3"},
-    ]
+async def get_data_choices(
+    store: PortfolioData,
+    region: str = None,
+    portfolio_set: str = None,
+    measure: str = None,
+):
+    from pandas import DataFrame
 
-    if not LOADED_PORTFOLIO or not DATASETS.get("loaded_portfolio", {}):
-        return output
+    port_data = await get_load_portfolios(
+        region, portfolio_set, measure, "daily", None, None
+    )
+    port_data = DataFrame(port_data)
 
-    data = DATASETS.get("loaded_portfolio", {}).get("data")
-    if data is not None:
-        cols = [k for k in data.columns if k != "Date"]
-        output.append([{"label": k, "value": k} for k in cols])
+    if port_data.empty:
+        output = [{"label": "No portfolios found. Try a new parameter.", "value": None}]
+    output = [{"label": c, "value": c} for c in port_data.columns if c != "Date"]
+
+    if "loaded_portfolio" not in store.list_stores:
+        store.add_store("loaded_portfolio", port_data)
+    elif "loaded_portfolio" in store.list_stores:
+        store.update_store("loaded_portfolio", port_data)
 
     return output
+
+
+@app.get("/benchmark_attribution", openapi_extra={"widget_config": {"type": "chart"}})
+async def benchmark_attribution(
+    store: PortfolioData,
+    region: Annotated[
+        str,
+        Query(
+            description="Region",
+            json_schema_extra={
+                "x-widget_config": {
+                    "type": "endpoint",
+                    "optionsEndpoint": "/get_factor_choices",
+                    "optionsParams": {
+                        "get_regions": True,
+                        "is_portfolio": True,
+                    },
+                }
+            },
+        ),
+    ] = "america",
+    portfolio_set: Annotated[
+        str,
+        Query(
+            description="Portfolio set to load.",
+            json_schema_extra={
+                "x-widget_config": {
+                    "style": {"popupWidth": 300},
+                    "type": "endpoint",
+                    "optionsEndpoint": "/get_factor_choices",
+                    "optionsParams": {
+                        "region": "$region",
+                        "is_portfolio": True,
+                        "frequency": "$frequency",
+                    },
+                }
+            },
+        ),
+    ] = "Portfolios_Formed_on_ME",
+    measure: Annotated[
+        Literal["Value", "Equal", "Number Of Firms", "Firm Size"],
+        Query(description="Data measurement"),
+    ] = "Value",
+    portfolio: Annotated[
+        str,
+        Query(
+            description="Select the portfolio.",
+            json_schema_extra={
+                "x-widget_config": {
+                    "type": "endpoint",
+                    "optionsEndpoint": "/get_factor_choices",
+                    "optionsParams": {
+                        "region": "$region",
+                        "portfolio_set": "$portfolio_set",
+                        "measure": "$measure",
+                        "start_date": "$start_date",
+                        "end_date": "$end_date",
+                        "is_attribution": True,
+                    },
+                }
+            },
+        ),
+    ] = None,
+    factor: Annotated[
+        str,
+        Query(
+            description="Factor set to use for analysis.",
+            json_schema_extra={
+                "x-widget_config": {
+                    "type": "endpoint",
+                    "optionsEndpoint": "/get_factor_choices",
+                    "optionsParams": {"region": "$region", "is_portfolio": False},
+                },
+            },
+        ),
+    ] = "5_Factors",
+    frequency: Annotated[
+        str,
+        Query(
+            description="Data frequency. Only valid when the dataset is not daily or weekly (in the name).",
+            json_schema_extra={
+                "x-widget_config": {
+                    "type": "endpoint",
+                    "optionsEndpoint": "/get_factor_choices",
+                    "optionsParams": {
+                        "region": "$region",
+                        "factor": "$factor",
+                        "is_portfolio": False,
+                    },
+                },
+            },
+        ),
+    ] = "Monthly",
+) -> dict:
+    """Get benchmark attribution."""
+
+    if "loaded_factors" not in store.list_stores:
+
+        factors = await get_load_factors(
+            store=store,
+            region=region,
+            factor=factor,
+            frequency=frequency,
+        )
+        factors = DataFrame(factors)
+        if factors.empty:
+            return []
+    else:
+        factors = store.get_store("loaded_factors")
+
+        if not isinstance(factors, DataFrame):
+            return []
+
+    if "loaded_portfolio" in store.list_stores:
+        port_data = store.get_store("loaded_portfolio")
+        if not isinstance(port_data, DataFrame):
+            return []
+    else:
+        port_data = await get_load_portfolios(
+            region,
+            portfolio_set,
+            measure,
+            frequency,
+        )
+        port_data = DataFrame(port_data)
+        store.add_store("loaded_portfolio", port_data)
+
+    portfolio_df = (
+        port_data.copy().set_index("Date")[[portfolio]]
+        if portfolio in port_data.columns
+        else port_data.copy().set_index("Date").iloc[:, -1:]
+    )
+
+    if portfolio_df.empty:
+        return {}
+    factor_df = factors.copy()
+
+    if "Date" in factor_df.columns:
+        factor_df = factor_df.set_index("Date")
+
+    portfolio_df.index = portfolio_df.index.astype("datetime64[s]")
+    factor_df.index = factor_df.index.astype("datetime64[s]")
+    factor_df = factor_df.astype(float)
+    factor_df = factor_df.sort_index()
+
+    # Get the factor date range to match our portfolio resampling
+    factor_min_date = factor_df.index.min()
+    factor_max_date = factor_df.index.max()
+
+    # Filter portfolio data to factor date range
+    portfolio_df = portfolio_df[
+        (portfolio_df.index >= factor_min_date)
+        & (portfolio_df.index <= factor_max_date)
+    ]
+
+    portfolio_df = portfolio_df.sort_index()
+
+    # Find the intersection of dates between the two dataframes
+    common_dates = portfolio_df.index.intersection(factor_df.index)
+
+    if len(common_dates) == 0:
+        return [{"Error": "No matching dates found between portfolio and factor data."}]
+
+    # Use only the common dates
+    portfolio_df = portfolio_df.loc[common_dates]
+    factor_df = factor_df.loc[common_dates]
+
+    portfolio = (
+        portfolio_df.columns[-1]
+        if portfolio is None or portfolio not in portfolio_df.columns
+        else portfolio
+    )
+
+    factor_df.loc[:, portfolio] = portfolio_df[portfolio].values
+
+    coefficients = []
+    added_portfolios = [portfolio]
+    timeframes = [
+        "3 Month",
+        "6 Month",
+        "1 Year",
+        "3 Year",
+        "5 Year",
+        "10 Year",
+        "25 Year",
+        "Max",
+    ]
+    if not added_portfolios:
+        return [{"Error": "Please select target data from the loaded portfolio set."}]
+    # Return as records for API response
+    factor_cols = [
+        k
+        for k in factor_df.columns
+        if k not in ["Date", "RF"] and k not in added_portfolios
+    ]
+
+    # Get current date
+    factor_df.index = factor_df.index.astype("datetime64[s]")
+    max_date = factor_df.index.max()
+
+    for timeframe in timeframes:
+        added_port = factor_df.copy()
+        if "RF" in added_port.columns:
+            added_port.loc[:, f"{portfolio}"] = (
+                added_port[portfolio].values - added_port["RF"].values
+            )
+        # Apply period filtering
+        if timeframe == "3 Month":
+            start_date = max_date - DateOffset(months=3)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "6 Month":
+            start_date = max_date - DateOffset(months=6)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "1 Year":
+            start_date = max_date - DateOffset(years=1)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "3 Year":
+            start_date = max_date - DateOffset(years=3)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "5 Year":
+            start_date = max_date - DateOffset(years=5)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "10 Year":
+            start_date = max_date - DateOffset(years=10)
+            added_port = added_port[added_port.index >= start_date]
+        elif timeframe == "25 Year":
+            start_date = max_date - DateOffset(years=25)
+            added_port = added_port[added_port.index >= start_date]
+
+        model = await perform_ols(
+            added_port,
+            portfolio,
+            factor_cols,
+        )
+        model = model
+        model.reset_index(inplace=True)
+        model.rename(columns={"index": "factor"}, inplace=True)
+
+        model.loc[:, "period"] = timeframe
+        model = model[
+            [
+                "period",
+                "factor",
+                "coefficient",
+                "p_value",
+                "lower_ci",
+                "upper_ci",
+            ]
+        ]
+        records = model.convert_dtypes().to_dict(orient="records")
+        coefficients.extend(records)
+
+    pivoted = DataFrame(coefficients).pivot_table(
+        columns="factor",
+        index="period",
+        values=["coefficient", "p_value", "lower_ci", "upper_ci"],
+        sort=False,
+    )
+    coeffs = pivoted["coefficient"]
+    p_value = pivoted["p_value"].dropna(how="all")
+    coeffs = coeffs.filter(items=p_value.index.tolist(), axis=0)
+
+    X = [d.replace("const", "Constant") for d in coeffs.columns.tolist()[1:]]
+    Y = coeffs.index.tolist()
+    colors_df = p_value.iloc[:, 1:].copy()
+    text_df = coeffs.iloc[:, 1:].copy()
+
+    fig = plot_factors(text_df, colors_df, X, Y)
+
+    fig_json = json.loads(fig.to_json())
+
+    return fig_json
 
 
 @app.get(
@@ -1060,12 +913,45 @@ async def get_data_choices():
     openapi_extra={"widget_config": {"exclude": True}},
 )
 async def get_factor_choices(
+    store: PortfolioData,
     region: str = None,
     factor: str = None,
     is_portfolio: bool = False,
     get_regions: bool = False,
     portfolio: str = None,
+    is_attribution: bool = False,
+    portfolio_set: str = None,
+    measure: str = None,
+    frequency: str = None,
 ):
+    if is_attribution is True:
+
+        from pandas import DataFrame
+
+        port_data = await get_load_portfolios(
+            region, portfolio_set, measure, frequency, None, None
+        )
+        port_data = DataFrame(port_data)
+
+        if port_data.empty:
+            output = [
+                {"label": "Please Refresh The Widget", "value": "Client 1"},
+            ]
+        output = [{"label": c, "value": c} for c in port_data.columns if c != "Date"]
+
+        if "loaded_portfolio" not in store.list_stores:
+            store.add_store("loaded_portfolio", port_data)
+        elif "loaded_portfolio" in store.list_stores:
+            store.update_store("loaded_portfolio", port_data)
+
+        return (
+            output
+            if output
+            else [
+                {"label": "Default", "value": None},
+            ]
+        )
+
     if get_regions is True and is_portfolio is True:
         return [
             {"label": k.replace("_", " ").title(), "value": k}
@@ -1177,11 +1063,9 @@ async def get_factor_choices(
     openapi_extra={
         "widget_config": {
             "name": "Portfolio Factor Attributions",
-            "data": {
-                "table": {
-                    "showAll": False,
-                }
-            },
+            "type": "chart",
+            "gridData": {"w": 40, "h": 20},
+            "params": [{"paramName": "theme", "show": False}],
         }
     },
 )
@@ -1217,7 +1101,13 @@ async def portfolio_factors(
         ),
     ] = "5_Factors",
     portfolio: Literal["Client 1", "Client 2", "Client 3"] = "Client 1",
-) -> list[PortfolioFactors]:
+    theme: Annotated[
+        str,
+        Query(
+            description="Theme for the chart.",
+        ),
+    ] = "dark",
+) -> dict:
     """Get dataset."""
     global DATASETS, LOADED_FACTORS
     frequency = "daily"
@@ -1339,7 +1229,7 @@ async def portfolio_factors(
                 portfolio,
                 factor_cols,
             )
-            model = model.round(6)
+            model = model
             model.reset_index(inplace=True)
             model.rename(columns={"index": "factor"}, inplace=True)
 
@@ -1357,59 +1247,25 @@ async def portfolio_factors(
             records = model.convert_dtypes().to_dict(orient="records")
             coefficients.extend(records)
 
-        output = []
         pivoted = DataFrame(coefficients).pivot_table(
             columns="factor",
             index="period",
             values=["coefficient", "p_value", "lower_ci", "upper_ci"],
+            sort=False,
         )
         coeffs = pivoted["coefficient"].reset_index()
         p_value = pivoted["p_value"].reset_index()
-        conf_hi = pivoted["upper_ci"].reset_index()
-        conf_low = pivoted["lower_ci"].reset_index()
-        idn = 0
-        for i in coeffs.index:
-            idn += 1
-            for col in coeffs.columns[1:].tolist():
-                p = round(float(p_value.iloc[i][col]), 6)
-                lo = round(float(conf_low.iloc[i][col]), 6)
-                hi = round(float(conf_hi.iloc[i][col]), 6)
-                coeff = round(float(coeffs.iloc[i][col]), 6)
-                output.append(
-                    {
-                        "period": coeffs.iloc[i, 0],
-                        "factor": col,
-                        "p_value": p,
-                        "lower_ci": lo,
-                        "upper_ci": hi,
-                        "coefficient": {
-                            "value": coeff,
-                            "P-Value": f"{p}",
-                            "ConfidenceBands": f"{lo} - {hi}",
-                        },
-                    }
-                )
-        period_list = ["1 Month", "3 Month", "YTD", "1 Year", "3 Year", "Max"]
-        output_df = DataFrame(output)
-        periods = [d for d in period_list if d in output_df.period.tolist()]
-        final_output = []
-        for period in periods:
-            row = {}
-            row["period"] = period
-            period_df = output_df[output_df.period == period]
-            factors = period_df.factor.unique().tolist()
-            for factor in factors:
-                c = period_df[period_df.factor == factor].coefficient.iloc[0]
-                p = period_df[period_df.factor == factor].p_value.iloc[0]
-                l = period_df[period_df.factor == factor].lower_ci.iloc[0]
-                u = period_df[period_df.factor == factor].upper_ci.iloc[0]
-                row[f"{factor.lower().replace('-', '_')}_coeff"] = c
-                row[f"{factor.lower().replace('-', '_')}_p_value"] = float(p)
-                row[f"{factor.lower().replace('-', '_')}_lower_ci"] = float(l)
-                row[f"{factor.lower().replace('-', '_')}_upper_ci"] = float(u)
-            final_output.append(row)
 
-        return final_output
+        X = [d.replace("const", "Constant") for d in coeffs.columns.tolist()[1:]]
+        Y = coeffs.period.tolist()
+        colors_df = p_value.iloc[:, 1:].copy()
+        text_df = coeffs.iloc[:, 1:].copy()
+
+        fig = plot_factors(text_df, colors_df, X, Y)
+
+        fig_json = json.loads(fig.to_json())
+
+        return fig_json
 
     except Exception as e:
         print(f"Error loading factor data: {e}")

@@ -1298,7 +1298,15 @@ async def holdings_correlation(
     timedelta = (
         21
         if timeframe == "1 Month"
-        else 63 if timeframe == "3 Month" else 252 if timeframe == "1 Year" else 252 * 3
+        else (
+            63
+            if timeframe == "3 Month"
+            else (
+                252
+                if timeframe == "1 Year"
+                else 252 * 3 if timeframe == "3 Year" else 252 * 5
+            )
+        )
     )
     data = data.iloc[-timedelta:]
 

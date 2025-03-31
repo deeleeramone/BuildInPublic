@@ -1186,6 +1186,8 @@ async def portfolio_unit_price(
     if returns is True:
         holdings.close = holdings.close.cumsum()
 
+    holdings = holdings.dropna(subset=["close"])
+
     # Convert index to string for serialization
     holdings.index = holdings.index.astype(str)
 

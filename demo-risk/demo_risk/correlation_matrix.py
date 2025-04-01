@@ -106,7 +106,7 @@ def plot_factors(df, color_df, X, Y, theme: str = "dark"):
     """
     Plot the factors of the data.
     """
-    title = "Factors Coefficients & P-Values"
+    title = "Factors, Coefficients & P-Values"
     text_color = "white" if theme == "dark" else "black"
 
     custom_colorscale = [

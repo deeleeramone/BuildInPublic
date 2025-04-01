@@ -19,10 +19,6 @@ from demo_risk.utils import (
     perform_ols,
 )
 
-DATASETS = {}
-LOADED_PORTFOLIO = None
-LOADED_FACTORS = None
-
 app = FastAPI()
 
 
@@ -85,7 +81,7 @@ async def get_templates():
     return [
         {
             "name": "Fama French Factors and Research Portfolio",
-            "img": "https://github.com/user-attachments/assets/a91780bf-6502-468e-95c1-da7efd6327f4",
+            "img": "https://github.com/user-attachments/assets/8b2409d6-5ddc-4cbc-b20c-89a29b1bd923",
             "img_dark": "",
             "img_light": "",
             "description": "Examine sample portfolio holdings distribution across countries, sectors, and industries, while also understanding how different assets correlate with each other over various time periods. This app provides insights into how portfolios respond to different market factors using Fama-French analysis, helping investors understand their portfolio's underlying drivers of returns and risk exposures.",
@@ -147,31 +143,6 @@ async def get_templates():
                             "state": {
                                 "params": {"portfolio": "Client 2", "returns": "True"},
                                 "chartView": {"enabled": True, "chartType": "line"},
-                                "columnState": {
-                                    "default_undefined": {
-                                        "focusedCell": {
-                                            "colId": "close",
-                                            "rowIndex": 0,
-                                            "rowPinned": None,
-                                        },
-                                        "rangeSelection": {
-                                            "cellRanges": [
-                                                {
-                                                    "startRow": {
-                                                        "rowIndex": 0,
-                                                        "rowPinned": None,
-                                                    },
-                                                    "endRow": {
-                                                        "rowIndex": 0,
-                                                        "rowPinned": None,
-                                                    },
-                                                    "colIds": ["close"],
-                                                    "startColId": "close",
-                                                }
-                                            ]
-                                        },
-                                    }
-                                },
                             },
                         }
                     ],
@@ -337,15 +308,39 @@ async def get_templates():
         "name": "F-F Datasets Info",
     },
 )
-async def get_fama_french_info() -> str:
+async def get_fama_french_info(store: PortfolioData) -> str:
     """Get Fama French info."""
     descriptions = ""
+    LOADED_PORTFOLIO = (
+        store.get_store("LOADED_PORTFOLIO")
+        if "LOADED_PORTFOLIO" in store.list_stores
+        else ""
+    )
+    LOADED_FACTORS = (
+        store.get_store("LOADED_FACTORS")
+        if "LOADED_FACTORS" in store.list_stores
+        else ""
+    )
 
-    if not DATASETS:
+    port_dataset = (
+        store.get_store("loaded_ff_portfolio")
+        if "loaded_ff_portfolio" in store.list_stores
+        else {}
+    )
+    factor_dataset = (
+        store.get_store("ff_factors") if "ff_factors" in store.list_stores else {}
+    )
+
+    if not port_dataset:
         await asyncio.sleep(2)
+        port_dataset = (
+            store.get_store("loaded_ff_portfolio")
+            if "loaded_ff_portfolio" in store.list_stores
+            else {}
+        )
 
-    if DATASETS.get("loaded_portfolio"):
-        descrip = DATASETS["loaded_portfolio"].get("meta", {}).get("description", "")
+    if port_dataset:
+        descrip = port_dataset.get("meta", {}).get("description", "")
         descriptions += (
             "\n\n"
             + f"### {LOADED_PORTFOLIO.replace('_', ' ')}"
@@ -355,8 +350,8 @@ async def get_fama_french_info() -> str:
             if descrip
             else ""
         )
-    if DATASETS.get("loaded_factors"):
-        descrip = DATASETS["loaded_factors"].get("meta", {}).get("description", "")
+    if factor_dataset:
+        descrip = factor_dataset.get("meta", {}).get("description", "")
         descriptions += (
             "\n\n"
             + f"### {LOADED_FACTORS.replace('_', ' ')}"
@@ -380,6 +375,7 @@ async def get_fama_french_info() -> str:
     },
 )
 async def get_load_portfolios(
+    store: PortfolioData,
     region: Annotated[
         str,
         Query(
@@ -451,8 +447,6 @@ async def get_load_portfolios(
     ] = None,
 ) -> list:
     """Get dataset."""
-    global DATASETS, LOADED_PORTFOLIO
-
     if not portfolio:
         return "Please select a portfolio."
     measure = measure.replace(" ", "_").lower()
@@ -486,8 +480,14 @@ async def get_load_portfolios(
             df = df[df.index <= end_date]
         df = df.astype(float)
         df = df.sort_index()
-        DATASETS["loaded_portfolio"] = {"meta": meta[0], "data": df}
-        LOADED_PORTFOLIO = portfolio
+        if "loaded_ff_portfolio" not in store.list_stores:
+            store.add_store("loaded_ff_portfolio", {"meta": meta[0], "data": df})
+        elif "loaded_ff_portfolio" in store.list_stores:
+            store.update_store("loaded_ff_portfolio", {"meta": meta[0], "data": df})
+        if "LOADED_PORTFOLIO" not in store.list_stores:
+            store.add_store("LOADED_PORTFOLIO", portfolio)
+        elif "LOADED_PORTFOLIO" in store.list_stores:
+            store.update_store("LOADED_PORTFOLIO", portfolio)
 
         return df.reset_index().to_dict(orient="records") if data else []
     except Exception:
@@ -567,8 +567,6 @@ async def get_load_factors(
     ] = None,
 ) -> list:
     """Get dataset."""
-    global DATASETS, LOADED_FACTORS
-
     if not factor:
         return "Please select a factor."
 
@@ -586,7 +584,6 @@ async def get_load_factors(
         None if "daily" in factor.lower() or "weekly" in factor.lower() else frequency
     )
 
-    LOADED_FACTORS = factor
     try:
         dfs, meta = get_portfolio_data(factor, frequency)
         df = dfs[0]
@@ -599,7 +596,14 @@ async def get_load_factors(
 
         df = df.astype(float)
         df = df.sort_index()
-        DATASETS["loaded_factors"] = {"meta": meta[0], "data": df}
+        if "ff_factors" not in store.list_stores:
+            store.add_store("ff_factors", {"meta": meta[0], "data": df})
+        elif "ff_factors" in store.list_stores:
+            store.update_store("ff_factors", {"meta": meta[0], "data": df})
+        if "LOADED_FACTORS" not in store.list_stores:
+            store.add_store("LOADED_FACTORS", factor)
+        elif "LOADED_FACTORS" in store.list_stores:
+            store.update_store("LOADED_FACTORS", factor)
         if "loaded_factors" not in store.list_stores:
             store.add_store("loaded_factors", df)
         elif "loaded_factors" in store.list_stores:
@@ -645,13 +649,20 @@ async def get_factor_choices(
     region: str = None,
     factor: str = None,
     is_portfolio: bool = False,
+    include_emerging: bool = True,
     get_regions: bool = False,
     portfolio: str = None,
     measure: str = None,
     frequency: str = None,
 ):
 
-    if get_regions is True and is_portfolio is True:
+    if get_regions is True and is_portfolio is True and include_emerging is False:
+        return [
+            {"label": k.replace("_", " ").title(), "value": k}
+            for k in list(REGIONS_MAP)
+            if "emerging" not in k.lower()
+        ]
+    if get_regions is True and is_portfolio is True and include_emerging is True:
         return [
             {"label": k.replace("_", " ").title(), "value": k}
             for k in list(REGIONS_MAP)
@@ -781,6 +792,7 @@ async def portfolio_factors(
                     "optionsParams": {
                         "get_regions": True,
                         "is_portfolio": True,
+                        "include_emerging": False,
                     },
                 }
             },
@@ -800,15 +812,9 @@ async def portfolio_factors(
         ),
     ] = "5_Factors",
     portfolio: Literal["Client 1", "Client 2", "Client 3"] = "Client 1",
-    theme: Annotated[
-        str,
-        Query(
-            description="Theme for the chart.",
-        ),
-    ] = "dark",
+    theme: str = "dark",
 ) -> dict:
     """Get dataset."""
-    global DATASETS, LOADED_FACTORS
     frequency = "daily"
     if not factor:
         return "Please select a factor."
@@ -839,7 +845,10 @@ async def portfolio_factors(
             else frequency
         )
 
-        LOADED_FACTORS = factor_name
+        if "LOADED_FACTORS" in store.list_stores:
+            store.update_store("LOADED_FACTORS", factor_name)
+        else:
+            store.add_store("LOADED_FACTORS", factor_name)
 
         dfs, meta = get_portfolio_data(factor_name, factor_freq)
         factor_df = dfs[0]
@@ -877,8 +886,11 @@ async def portfolio_factors(
         factor_df = factor_df.loc[common_dates]
 
         factor_df.loc[:, portfolio] = portfolio_df[portfolio].values
-        # Store the result
-        DATASETS["loaded_factors"] = {"meta": meta[0], "data": factor_df}
+
+        if "ff_factors" in store.list_stores:
+            store.update_store("ff_factors", {"meta": meta[0], "data": factor_df})
+        else:
+            store.add_store("ff_factors", {"meta": meta[0], "data": factor_df})
 
         coefficients = []
         added_portfolios = portfolio.split(",") if "," in portfolio else [portfolio]
@@ -1279,12 +1291,7 @@ async def holdings_correlation(
             description="Select the timeframe.",
         ),
     ] = "3 Month",
-    theme: Annotated[
-        str,
-        Query(
-            description="Select the theme.",
-        ),
-    ] = "dark",
+    theme: str = "dark",
 ) -> dict:
     """Get portfolio holdings."""
     import json

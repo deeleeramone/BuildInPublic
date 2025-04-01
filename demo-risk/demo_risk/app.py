@@ -84,11 +84,11 @@ async def get_templates():
     """Get templates."""
     return [
         {
-            "name": "Factors",
+            "name": "Factor Attribution Example",
             "img": "",
             "img_dark": "",
             "img_light": "",
-            "description": "factors",
+            "description": "Example template utilizing the Fama-French datasets.",
             "allowCustomization": True,
             "tabs": {
                 "reference-data": {

@@ -1,4 +1,4 @@
-# Fama French Factors & Research Portfolios Data
+![ffimg](https://github.com/user-attachments/assets/a91780bf-6502-468e-95c1-da7efd6327f4)
 
 ## Installation
 

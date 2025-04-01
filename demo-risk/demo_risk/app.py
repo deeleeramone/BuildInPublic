@@ -7,7 +7,7 @@ from typing import Annotated, Literal, Optional
 
 from fastapi import FastAPI, Query
 from openbb_core.provider.abstract.data import Data
-from pandas import DataFrame, DateOffset, Timestamp
+from pandas import DataFrame, DateOffset, DatetimeIndex, Timestamp, to_datetime
 from pydantic import Field
 
 from demo_risk.constants import DATASET_CHOICES, FACTOR_REGION_MAP, REGIONS_MAP
@@ -1139,8 +1139,6 @@ async def portfolio_unit_price(
     ] = False,
 ) -> list[PriceHistory]:
     """Get portfolio's unit price history."""
-    import pandas as pd
-
     port_data = store.get_store(f"portfolio_{portfolio[-1]}")
     if not port_data:
         return []
@@ -1166,8 +1164,8 @@ async def portfolio_unit_price(
         holdings = holdings.to_frame().rename(columns={asset: "close"})
 
     # Ensure index is datetime type
-    if not isinstance(holdings.index, pd.DatetimeIndex):
-        holdings.index = pd.to_datetime(holdings.index)
+    if not isinstance(holdings.index, DatetimeIndex):
+        holdings.index = to_datetime(holdings.index)
 
     # Sort by date
     holdings = holdings.sort_index()
@@ -1178,19 +1176,19 @@ async def portfolio_unit_price(
 
     # Apply period filtering
     if period == "1 Month":
-        start_date = max_date - pd.DateOffset(months=1)
+        start_date = max_date - DateOffset(months=1)
         holdings = holdings[holdings.index >= start_date]
     elif period == "3 Month":
-        start_date = max_date - pd.DateOffset(months=3)
+        start_date = max_date - DateOffset(months=3)
         holdings = holdings[holdings.index >= start_date]
     elif period == "YTD":
-        start_date = pd.Timestamp(f"{current_year}-01-01")
+        start_date = Timestamp(f"{current_year}-01-01")
         holdings = holdings[holdings.index >= start_date]
     elif period == "1 Year":
-        start_date = max_date - pd.DateOffset(years=1)
+        start_date = max_date - DateOffset(years=1)
         holdings = holdings[holdings.index >= start_date]
     elif period == "3 Year":
-        start_date = max_date - pd.DateOffset(years=3)
+        start_date = max_date - DateOffset(years=3)
         holdings = holdings[holdings.index >= start_date]
     # For "Max", we use all data
 

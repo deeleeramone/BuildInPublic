@@ -309,50 +309,6 @@ DATASET_CHOICES = [
 ]
 
 
-COUNTRY_PORTFOLIOS_URLS = {
-    "dividends": "F-F_International_Countries.zip",
-    "ex": "F-F_International_Countries_Wout_Div.zip",
-}
-
-COUNTRY_PORTFOLIO_FILES = {
-    "Austria": "Austria.Dat",
-    "Australia": "Australia.Dat",
-    "Belgium": "Belgium.Dat",
-    "Canada": "Canada.Dat",
-    "Denmark": "Denmark.Dat",
-    "Finland": "Finland.Dat",
-    "France": "France.Dat",
-    "Germany": "Germany.Dat",
-    "Hong Kong": "HongKong.Dat",
-    "Ireland": "Ireland.Dat",
-    "Italy": "Italy.Dat",
-    "Japan": "Japan.Dat",
-    "Malaysia": "Malaysia.Dat",
-    "Netherlands": "Nethrlnd.Dat",
-    "New Zealand": "NewZland.Dat",
-    "Norway": "Norway.Dat",
-    "Singapore": "Singapor.Dat",
-    "Spain": "Spain.Dat",
-    "Sweden": "Sweden.Dat",
-    "Switzerland": "Swtzrlnd.Dat",
-    "United Kingdom": "UK.Dat",
-}
-
-INTERNATIONAL_INDEX_PORTFOLIOS_URLS = {
-    "dividends": "F-F_International_Indices.zip",
-    "ex": "F-F_International_Indices_Wout_Div.zip",
-}
-
-INTERNATIONAL_INDEX_PORTFOLIO_FILES = {
-    "UK": "Ind_UK.Dat",
-    "Scandinavia": "Ind_Scandinavia.Dat",
-    "Europe": "Ind_Eur_With_UK.Dat",
-    "Europe ex-UK": "Ind_Eur_WOut_UK.Dat",
-    "Asia Pacific": "Ind_Asia_Pac.Dat",
-    "All": "Ind_all.Dat",
-}
-
-
 REGIONS_MAP = {
     "america": "",
     "north_america": "North_America",

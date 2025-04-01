@@ -84,11 +84,11 @@ async def get_templates():
     """Get templates."""
     return [
         {
-            "name": "Factor Attribution Example",
-            "img": "",
+            "name": "Fama French Factors and Research Portfolio",
+            "img": "https://github-production-user-asset-6210df.s3.amazonaws.com/25267873/428838117-ff4bc1fc-8585-4eea-bf12-3b7baa7b4632.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAVCODYLSA53PQK4ZA/20250401/us-east-1/s3/aws4_request&X-Amz-Date=20250401T014456Z&X-Amz-Expires=300&X-Amz-Signature=7d22901410f8bf5554fd085e594cfc5cd0d6e260e4d059356fe258eb3baf6848&X-Amz-SignedHeaders=host",
             "img_dark": "",
             "img_light": "",
-            "description": "Example template utilizing the Fama-French datasets.",
+            "description": "Examine sample portfolio holdings distribution across countries, sectors, and industries, while also understanding how different assets correlate with each other over various time periods. This app provides insights into how portfolios respond to different market factors using Fama-French analysis, helping investors understand their portfolio's underlying drivers of returns and risk exposures.",
             "allowCustomization": True,
             "tabs": {
                 "reference-data": {

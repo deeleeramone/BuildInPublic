@@ -1,4 +1,5 @@
-![ffimg](https://github.com/user-attachments/assets/a91780bf-6502-468e-95c1-da7efd6327f4)
+![Screenshot 2025-03-31 at 7 41 48 PM](https://github.com/user-attachments/assets/8b2409d6-5ddc-4cbc-b20c-89a29b1bd923)
+
 
 ## Installation
 

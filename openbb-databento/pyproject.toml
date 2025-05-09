@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "openbb-databento"
+version = "1.0.0"
+description = "Demonstration OpenBB Workspace application using Databento's CME feed."
+authors = ["OpenBB Team <hello@openbb.co>"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+packages = [{ include = "openbb_databento" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+openbb-api = "^1.1.8"
+databento = "^0.52.0"
+
+[tool.poetry.scripts]
+openbb-databento = "openbb_databento.app.main:main"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

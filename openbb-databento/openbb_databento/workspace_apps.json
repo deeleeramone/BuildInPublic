@@ -1,0 +1,206 @@
+[{
+    "name": "Databento Demo App - CME Futures",
+    "img": "https://images.squarespace-cdn.com/content/v1/63a17e2bca256c483b6e2453/1675877523309-SGDQXJ8K2KPHYLZI2AV5/Databento.png?format=250w",
+    "img_dark": "",
+    "img_light": "",
+    "description": "A demonstration application with Databento's CME Futures data.",
+    "allowCustomization": true,
+    "tabs": {
+      "index-futures": {
+        "id": "index-futures",
+        "name": "Index Futures Trades",
+        "layout": [
+          {
+            "i": "live_grid_index",
+            "x": 0,
+            "y": 2,
+            "w": 32,
+            "h": 11,
+            "state": {
+              "params": {
+                "symbol": [
+                  "ESM5",
+                  "MESM5",
+                  "NQM5",
+                  "MNQM5",
+                  "RTYM5",
+                  "YMM5",
+                  "NKDM5",
+                  "RXM5",
+                  "AWM5"
+                ]
+              },
+              "columnState": {
+                "default_undefined": {
+                  "version": "33.2.1",
+                  "columnOrder": {
+                    "orderedColIds": [
+                      "date",
+                      "symbol",
+                      "name",
+                      "side",
+                      "size",
+                      "price"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "fx-futures": {
+        "id": "fx-futures",
+        "name": "FX Futures Trades",
+        "layout": [
+          {
+            "i": "live_grid_fx",
+            "x": 0,
+            "y": 2,
+            "w": 31,
+            "h": 23,
+            "state": {
+              "params": {
+                "symbol": [
+                  "6NM5",
+                  "SIRK5",
+                  "6SM5",
+                  "6LM5",
+                  "6EK5",
+                  "6BK5",
+                  "6JK5",
+                  "6BK5",
+                  "6EK5",
+                  "6CK5",
+                  "6MK5",
+                  "6AK5",
+                  "6NM5",
+                  "6NM5",
+                  "CNHK5",
+                  "6ZK5",
+                  "BTCK5",
+                  "ETHK5"
+                ]
+              },
+              "columnState": {
+                "default_undefined": {
+                  "version": "33.2.1",
+                  "focusedCell": {
+                    "colId": "size",
+                    "rowIndex": 8,
+                    "rowPinned": null
+                  },
+                  "sort": {
+                    "sortModel": [
+                      {
+                        "colId": "name",
+                        "sort": "asc"
+                      }
+                    ]
+                  },
+                  "columnOrder": {
+                    "orderedColIds": [
+                      "date",
+                      "symbol",
+                      "name",
+                      "side",
+                      "size",
+                      "price"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "interest-rate-futures": {
+        "id": "interest-rate-futures",
+        "name": "Interest Rate Futures Trades",
+        "layout": [
+          {
+            "i": "live_grid_interest_rates",
+            "x": 0,
+            "y": 2,
+            "w": 30,
+            "h": 15,
+            "state": {
+              "params": {
+                "symbol": [
+                  "SR1K5",
+                  "ZQK5",
+                  "SR3G5",
+                  "ZTM5",
+                  "ZFM5",
+                  "ZNM5",
+                  "TNM5",
+                  "ZBM5",
+                  "UBM5"
+                ]
+              },
+              "columnState": {
+                "default_undefined": {
+                  "version": "33.2.1",
+                  "columnOrder": {
+                    "orderedColIds": [
+                      "date",
+                      "symbol",
+                      "name",
+                      "side",
+                      "size",
+                      "price"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "metals-futures": {
+        "id": "metals-futures",
+        "name": "Metals Futures Trades",
+        "layout": [
+          {
+            "i": "live_grid_metals",
+            "x": 0,
+            "y": 2,
+            "w": 31,
+            "h": 13,
+            "state": {
+              "params": {
+                "symbol": [
+                  "GCK5",
+                  "QOM5",
+                  "MGCM5",
+                  "SIK5",
+                  "PAK5",
+                  "PLK5",
+                  "HGK5",
+                  "ALIK5",
+                  "HRCK5"
+                ]
+              },
+              "columnState": {
+                "default_undefined": {
+                  "version": "33.2.1",
+                  "columnOrder": {
+                    "orderedColIds": [
+                      "date",
+                      "symbol",
+                      "name",
+                      "side",
+                      "size",
+                      "price"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "groups": []
+  }
+]

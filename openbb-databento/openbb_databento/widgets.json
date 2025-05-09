@@ -1,0 +1,441 @@
+{
+    "continuous_futures_historical": {
+      "name": "Continuous Futures Historical Price Chart",
+      "description": "Historical continuous futures charting.",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "type": "advanced_charting",
+      "endpoint": "udf",
+      "params": [],
+      "gridData": {
+        "w": 40,
+        "h": 30
+      },
+      "data": {
+        "defaultSymbol": "ES.c.0",
+        "updateFrequency": 6500000
+      }
+    },
+    "live_grid_index": {
+      "name": "Index Futures Trades (Live Grid)",
+      "description": "Live trades feed for index futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "index"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    },
+    "live_grid_fx": {
+      "name": "FX Futures Trades (Live Grid)",
+      "description": "Live trades feed for FX futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "fx"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    },
+    "live_grid_interest_rates": {
+      "name": "Interest Rate Futures Trades (Live Grid)",
+      "description": "Live trades feed for interest rate futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "interest_rates"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    },
+    "live_grid_metals": {
+      "name": "Metals Futures Trades (Live Grid)",
+      "description": "Live trades feed for metals futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "metals"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    },
+    "live_grid_energy": {
+      "name": "Energy Futures Trades (Live Grid)",
+      "description": "Live trades feed for energy futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "energy"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    },
+    "live_grid_agriculture": {
+      "name": "Agriculture Futures Trades (Live Grid)",
+      "description": "Live trades feed for agrictulture futures.",
+      "type": "live_grid",
+      "endpoint": "live/get_ws_data",
+      "wsEndpoint": "live/ws",
+      "source": [
+        "Databento",
+        "CME"
+      ],
+      "data": {
+        "wsRowIdColumn": "symbol",
+        "table": {
+          "showAll": true,
+          "columnsDefs": [
+            {
+              "field": "date",
+              "headerName": "Date",
+              "type": "date"
+            },
+            {
+              "field": "symbol",
+              "headerName": "Symbol",
+              "type": "text"
+            },
+            {
+              "field": "name",
+              "headerName": "Name",
+              "type": "text"
+            },
+            {
+              "field": "side",
+              "headerName": "Side",
+              "type": "text"
+            },
+            {
+              "field": "size",
+              "headerName": "Size",
+              "type": "number"
+            },
+            {
+              "field": "price",
+              "headerName": "Price",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "params": [
+        {
+          "paramName": "symbol",
+          "description": "The symbol to get details for",
+          "value": null,
+          "label": "Symbol",
+          "type": "endpoint",
+          "multiSelect": true,
+          "optionsEndpoint": "live/symbology",
+          "optionsParams": {
+            "asset_type": "agriculture"
+          },
+          "style": {
+            "popupWidth": 400
+          }
+        }
+      ],
+      "gridData": {
+        "w": 25,
+        "h": 15
+      }
+    }
+  }

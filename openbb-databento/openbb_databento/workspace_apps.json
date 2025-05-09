@@ -1,13 +1,39 @@
 [{
-    "name": "Databento Demo App - CME Futures",
+    "name": "Databento Demo - CME",
     "img": "https://images.squarespace-cdn.com/content/v1/63a17e2bca256c483b6e2453/1675877523309-SGDQXJ8K2KPHYLZI2AV5/Databento.png?format=250w",
     "img_dark": "",
     "img_light": "",
     "description": "A demonstration application with Databento's CME Futures data.",
     "allowCustomization": true,
     "tabs": {
-      "index-futures": {
-        "id": "index-futures",
+      "about": {
+        "id": "about",
+        "name": "About",
+        "layout": [
+          {
+            "i": "about",
+            "x": 0,
+            "y": 2,
+            "w": 40,
+            "h": 21
+          }
+        ]
+      },
+      "historical-continuous-chart": {
+        "id": "historical-continuous-chart",
+        "name": "Historical Continuous Chart",
+        "layout": [
+          {
+            "i": "continuous_futures_historical",
+            "x": 0,
+            "y": 2,
+            "w": 40,
+            "h": 21
+          }
+        ]
+      },
+      "index-futures-trades": {
+        "id": "index-futures-trades",
         "name": "Index Futures Trades",
         "layout": [
           {
@@ -15,7 +41,7 @@
             "x": 0,
             "y": 2,
             "w": 32,
-            "h": 11,
+            "h": 12,
             "state": {
               "params": {
                 "symbol": [
@@ -85,11 +111,6 @@
               "columnState": {
                 "default_undefined": {
                   "version": "33.2.1",
-                  "focusedCell": {
-                    "colId": "size",
-                    "rowIndex": 8,
-                    "rowPinned": null
-                  },
                   "sort": {
                     "sortModel": [
                       {
@@ -165,7 +186,7 @@
             "i": "live_grid_metals",
             "x": 0,
             "y": 2,
-            "w": 31,
+            "w": 37,
             "h": 13,
             "state": {
               "params": {
@@ -179,6 +200,46 @@
                   "HGK5",
                   "ALIK5",
                   "HRCK5"
+                ]
+              },
+              "columnState": {
+                "default_undefined": {
+                  "version": "33.2.1",
+                  "columnOrder": {
+                    "orderedColIds": [
+                      "date",
+                      "symbol",
+                      "name",
+                      "size",
+                      "side",
+                      "price"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "agriculture-futures-trades": {
+        "id": "agriculture-futures-trades",
+        "name": "Agriculture Futures Trades",
+        "layout": [
+          {
+            "i": "live_grid_agriculture",
+            "x": 0,
+            "y": 2,
+            "w": 25,
+            "h": 15,
+            "state": {
+              "params": {
+                "symbol": [
+                  "ZCK5",
+                  "ZOK5",
+                  "ZSK5",
+                  "ZWK5",
+                  "ZOK5",
+                  "ZRK5"
                 ]
               },
               "columnState": {

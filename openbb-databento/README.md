@@ -2,6 +2,26 @@
 
 This application is a demonstration integration of CME futures data, utilizing Databento's Python [client](https://github.com/databento/databento-python/tree/main).
 
+### Installation
+
+A Python environment with versions between 3.10 and 3.12, inclusively, is required.
+
+Run:
+
+```sh
+pip install -e .
+```
+
+### Launch
+
+Launch the server from the command line with:
+
+```sh
+openbb-databento
+```
+
+This will start the application over localhost on port 6940
+
 ### Authorization
 
 A subscription to the CME Globex MDP 3.0 feed is required. Details of this dataset are found [here](https://databento.com/docs/venues-and-datasets/glbx-mdp3).

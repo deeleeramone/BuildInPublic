@@ -1,3 +1,4 @@
+from pathlib import Path
 from fastapi import FastAPI
 
 
@@ -26,6 +27,17 @@ def app() -> FastAPI:
     manager = create_databento_manager(api_key)
     app.include_router(udf_router, tags=["UDF"])
     app.include_router(manager.router, tags=["Live"])
+
+    @app.get("/about")
+    async def about():
+        """About endpoint."""
+        about_text = ""
+        about_path = Path(__file__).parent.parent / "data" / "README.md"
+
+        with open(about_path, encoding="utf-8") as f:
+            about_text = f.read()
+
+        return about_text
 
     return app
 

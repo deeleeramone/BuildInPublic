@@ -12,6 +12,8 @@ CacheStore = Store(str(historical_data_path))
 
 historical_df = CacheStore.get_store("continuous")
 
+ESOptions = Annotated[dict, Depends(lambda: CacheStore.get_store("es_options"))]
+
 HistoricalData = Annotated[
     DataFrame,
     Depends(

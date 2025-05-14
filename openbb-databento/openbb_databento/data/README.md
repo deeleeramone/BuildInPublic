@@ -28,3 +28,8 @@ The master list is broken down into categories, each one having its own tab for 
 
 If an asset has not traded since the backend was started, it will display as 0 and update when a trade message is received.
 
+### Estimated Volatility Surface
+
+Options data represents the last recorded trade for a contract on that date.
+
+Volatility is estimated using Scipy's root_scalar in a basic implementation of the Black-76 model.

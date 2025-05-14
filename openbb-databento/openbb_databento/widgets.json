@@ -14,6 +14,102 @@
       "h": 17
     }
   },
+  "volatility_surface": {
+    "name": "Estimated Volatility Surface",
+    "description": "Estimated volatility surface for E-Mini S&P 500 options on futures.",
+    "source": [
+      "Databento",
+      "CME"
+    ],
+    "type": "chart",
+    "endpoint": "options/surface",
+    "params": [
+      {
+        "paramName": "date",
+        "description": "The date of the data.",
+        "value": "2025-05-01",
+        "label": "Date",
+        "type": "text",
+        "options": [
+          {
+            "label": "2025-05-01",
+            "value": "2025-05-01"
+          },
+          {
+            "label": "One Year Ago",
+            "value": "2024-05-01"
+          }
+        ]
+      },
+      {
+        "paramName": "option_type",
+        "description": "The type of option to view. Call, Put, ITM, or OTM (Out of the Money).",
+        "value": "otm",
+        "label": "Option Type",
+        "type": "text",
+        "options": [
+          {
+            "label": "Calls",
+            "value": "calls"
+          },
+          {
+            "label": "Puts",
+            "value": "puts"
+          },
+          {
+            "label": "OTM (Out of the Money)",
+            "value": "otm"
+          },
+          {
+            "label": "ITM (In the Money)",
+            "value": "itm"
+          }
+        ]
+      },
+      {
+        "paramName": "dte_min",
+        "description": "The time to expiration in days.",
+        "value": 10,
+        "label": "DTE Min",
+        "type": "number"
+      },
+      {
+        "paramName": "dte_max",
+        "description": "The time to expiration in days.",
+        "value": 90,
+        "label": "DTE Max",
+        "type": "number"
+      },
+      {
+        "paramName": "moneyness",
+        "description": "The moneyness (%) of the options to view.",
+        "value": 20,
+        "label": "Moneyness (%)",
+        "type": "number"
+      },
+      {
+        "paramName": "strike_min",
+        "description": "The minimum strike price to view.",
+        "value": null,
+        "label": "Strike Min",
+        "type": "number"
+      },
+      {
+        "paramName": "strike_max",
+        "description": "The maximum strike price to view.",
+        "value": null,
+        "label": "Strike Max",
+        "type": "number"
+      }
+    ],
+    "gridData": {
+      "w": 40,
+      "h": 20
+    },
+    "data": {
+      "refetchInterval": false
+    }
+  },
   "continuous_futures_historical": {
     "name": "Continuous Futures Historical Price Chart",
     "description": "Historical continuous futures charting.",

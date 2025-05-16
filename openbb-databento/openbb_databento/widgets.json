@@ -14,6 +14,68 @@
       "h": 17
     }
   },
+  "term_structure": {
+    "name": "Term Structure",
+    "description": "Futures term structure for CME assets.",
+    "source": [
+      "Databento",
+      "CME"
+    ],
+    "type": "table",
+    "endpoint": "term_structures/get_term_structure",
+    "params": [
+      {
+        "paramName": "symbol",
+        "description": "Underlying asset.",
+        "value": "CL",
+        "label": "Symbol",
+        "type": "endpoint",
+        "optionsEndpoint": "term_structures/get_choices",
+        "style": {
+          "popupWidth": 400
+        }
+      },
+      {
+        "paramName": "date",
+        "description": "The date of the data.",
+        "value": "2025-05-01",
+        "label": "Date",
+        "type": "text",
+        "options": [
+          {
+            "label": "2025-05-01",
+            "value": "2025-05-01"
+          },
+          {
+            "label": "One Year Ago",
+            "value": "2024-05-01"
+          }
+        ]
+      }
+    ],
+    "gridData": {
+      "w": 40,
+      "h": 15
+    },
+    "data": {
+      "table": {
+        "showAll": false,
+        "columnsDefs": [
+          {
+            "field": "expiration",
+            "headerName": "Expiry",
+            "type": "date"
+          },
+          {
+            "field": "settlement_price",
+            "headerName": "Settlement Price",
+            "type": "number"
+          }
+        ]
+      }
+    },
+    "refetchInterval": false
+  },
   "volatility_surface": {
     "name": "Estimated Volatility Surface",
     "description": "Estimated volatility surface for E-Mini S&P 500 options on futures.",

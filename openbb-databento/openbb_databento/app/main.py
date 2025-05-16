@@ -9,6 +9,7 @@ def app() -> FastAPI:
     from openbb_core.env import Env
     from openbb_core.app.model.command_context import CommandContext
     from openbb_databento.app.options import router as options_router
+    from openbb_databento.app.term_structures import router as term_structures_router
     from openbb_databento.app.udf import router as udf_router
     from openbb_databento.app.ws import create_databento_manager
 
@@ -29,6 +30,7 @@ def app() -> FastAPI:
     app.include_router(udf_router, tags=["UDF"])
     app.include_router(manager.router, tags=["Live"])
     app.include_router(options_router, tags=["Options"])
+    app.include_router(term_structures_router, tags=["Term Structures"])
 
     @app.get("/about")
     async def about():
@@ -50,8 +52,6 @@ def main():
     import sys
 
     config_file_path = __file__.replace("/app/main.py", "")
-
-    print(config_file_path)
 
     try:
         subprocess.run(

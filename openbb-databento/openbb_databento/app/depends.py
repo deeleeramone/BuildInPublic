@@ -20,3 +20,7 @@ HistoricalData = Annotated[
         lambda: historical_df,
     ),
 ]
+
+TermStructures = Annotated[
+    dict, Depends(lambda: CacheStore.get_store("term_structures"))
+]

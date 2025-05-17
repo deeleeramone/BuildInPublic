@@ -222,8 +222,8 @@ def create_surface(
     output.charting._charting_settings.chart_style = theme
     fig = output.charting._set_chart_style(fig)
 
-    content = fig.show(
-        config={"scrollZoom": True, "displayModeBar": True}, external=True
-    ).to_plotly_json()
+    content = fig.show(external=True).to_plotly_json()
+
+    content.update(dict(config={"scrollZoom": True, "displayModeBar": True}))
 
     return json.loads(json.dumps(content))
